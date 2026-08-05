@@ -1,0 +1,1143 @@
+/**
+ * app.js — entry point + orchestration (PROD).
+ *
+ * User-facing features: theme picker + avatar drop (customize), upload audio +
+ * microphone recording (audio source), a trim panel with a 3-minute cap, and
+ * WebM/MP4 export. The scene canvas is the single source of truth (preview ==
+ * export). Projects (audio blob + trim range) persist to IndexedDB; theme
+ * persists to localStorage.
+ *
+ * Adapted from the debugged sample/ build for the production UI (studio.html):
+ * icon-based play/pause button, restart control, reset/remove-project actions,
+ * and a debug metrics panel gated behind ?debug=1.
+ */
+
+import { Preview, THEMES, WAVE_BARS, AVATAR_URL } from "./preview.js";
+import { Recorder } from "./recorder.js";
+import { DURATION, WIDTH } from "./timeline.js";
+
+const MAX_DURATION = 180; // 3:00 cap (seconds)
+const LS_THEME = "inote-theme";
+const DEBUG = new URLSearchParams(location.search).has("debug");
+
+const els = {
+  scene: document.getElementById("scene"),
+  avatarBox: document.getElementById("avatar-box"),
+  avatarPreview: document.getElementById("avatar-preview"),
+  avatarInput: document.getElementById("avatar-input"),
+  avatarReset: document.getElementById("avatar-reset"),
+  themePicker: document.getElementById("theme-picker"),
+  themeCurrent: null,
+  themeName: null,
+  themeMenu: null,
+  uploadBtn: document.getElementById("upload-btn"),
+  recordBtn: document.getElementById("record-btn"),
+  audioInput: document.getElementById("audio-input"),
+  audioInfo: document.getElementById("audio-info"),
+  audioDuration: document.getElementById("audio-duration"),
+  fileRemove: document.getElementById("file-remove"),
+  trimWave: document.getElementById("trim-wave"),
+  trimDuration: document.getElementById("trim-duration"),
+  trimSelected: document.getElementById("trim-duration-selected"),
+  trimStart: document.getElementById("trim-start"),
+  trimEnd: document.getElementById("trim-end"),
+  trimReset: document.getElementById("trim-reset"),
+  playBtn: document.getElementById("play-btn"),
+  generateBtn: document.getElementById("generate-btn"),
+  generateFill: document.getElementById("generate-fill"),
+  generateLabel: document.getElementById("generate-label"),
+  resetBtn: document.getElementById("reset-btn"),
+  statusDot: document.getElementById("status-dot"),
+  statusText: document.getElementById("status-text"),
+  stepAudio: document.getElementById("step-audio"),
+  stepTrim: document.getElementById("step-trim"),
+  metrics: document.getElementById("metrics"),
+  metricsList: document.getElementById("metrics-list"),
+  metricsToggle: document.getElementById("metrics-toggle"),
+  unsupported: document.getElementById("unsupported"),
+};
+
+function setStatus(state, text) {
+  els.statusDot.className = state ? `recording ${state}` : "";
+  els.statusText.textContent = text;
+}
+
+/** Read a CSS custom property set by /js/theme.js, with a fallback. */
+function cssVar(name, fallback) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
+const PLAY_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+const PAUSE_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>`;
+
+/** Swap the play/pause icon on the round preview button. */
+function setPlayLabel(playing) {
+  els.playBtn.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+  els.playBtn.setAttribute("aria-label", playing ? "Pause preview" : "Play preview");
+}
+
+/** Toggle the record action-card title between record / stop and give the
+ *  card a distinct "recording" look (red ring + pulsing dot). */
+function setRecordLabel(recording) {
+  const title = els.recordBtn.querySelector(".action-title");
+  if (title) title.textContent = recording ? "Stop Recording" : "Record Voice Note";
+  els.recordBtn.classList.toggle("recording", recording);
+}
+
+/**
+ * Drive the generate progress inside the button itself.
+ * @param {number|null} pct 0..100 fills the button with color; -1 for an
+ *                          indeterminate (sweeping) state; null resets it.
+ */
+function setProgress(pct) {
+  const fill = els.generateFill;
+  if (pct === null || pct === undefined) {
+    fill.classList.remove("indeterminate");
+    fill.style.width = "0%";
+    return;
+  }
+  if (pct < 0) {
+    fill.style.width = "30%";
+    fill.classList.add("indeterminate");
+    return;
+  }
+  fill.classList.remove("indeterminate");
+  fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+}
+
+/** Set the text shown inside the generate button. */
+function setGenerateLabel(text) {
+  els.generateLabel.textContent = text;
+}
+
+const metrics = {
+  items: [],
+  record(label, value) {
+    this.items.push({ label, value });
+    this.render();
+  },
+  tick(_t) {},
+  render() {
+    // Debug-only panel: only rendered when opened via ?debug=1.
+    if (this.items.length === 0 || !DEBUG) return;
+    els.metrics.classList.remove("hidden");
+    els.metricsList.innerHTML = this.items
+      .map((m) => `<li>${m.label}: <b>${m.value}</b></li>`)
+      .join("");
+  },
+};
+
+let preview;
+let recorder;
+let busy = false;
+let currentDuration = DURATION;
+let lastMp4 = null;
+let fileName = "demo.mp3";
+
+// Full decoded audio (capped to MAX_DURATION) + the active trim range.
+let sourceBuffer = null; // AudioBuffer (full, capped)
+let trim = { start: 0, end: 0 };
+let sourceBlob = null; // compact original blob (for persistence / restore)
+let sourceEnvelope = []; // waveform for the trim display
+
+/* ------------------------------------------------------------------
+   AUDIO
+   ------------------------------------------------------------------ */
+const audio = (() => {
+  const el = new Audio("/assets/demo.mp3");
+  el.loop = true;
+  return {
+    el,
+    play() { el.currentTime = 0; el.play().catch(() => {}); },
+    resume() { el.play().catch(() => {}); },
+    stop() { el.pause(); },
+  };
+})();
+
+// One MediaElementSource per element, reused across recordings so the
+// browser does not throw "already connected to a different source node".
+let audioCapture = null;
+function ensureAudioCapture() {
+  if (audioCapture) return audioCapture;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  const ctx = new Ctx();
+  const dest = ctx.createMediaStreamDestination();
+  const src = ctx.createMediaElementSource(audio.el);
+  const gain = ctx.createGain();
+  gain.gain.value = 1;
+  src.connect(dest); // -> recording track
+  src.connect(gain);
+  gain.connect(ctx.destination); // -> speakers (silence during render)
+  audioCapture = {
+    ctx,
+    track: dest.stream.getAudioTracks()[0],
+    setAudible(on) {
+      gain.gain.value = on ? 1 : 0;
+    },
+  };
+  return audioCapture;
+}
+
+/** Encode an AudioBuffer to a 16-bit PCM WAV Blob (universal playback). */
+function audioBufferToWav(buffer) {
+  const numCh = Math.min(buffer.numberOfChannels, 2);
+  const sampleRate = buffer.sampleRate;
+  const length = buffer.length * numCh * 2;
+  const dataView = new DataView(new ArrayBuffer(44 + length));
+
+  const writeStr = (off, s) => {
+    for (let i = 0; i < s.length; i++) dataView.setUint8(off + i, s.charCodeAt(i));
+  };
+
+  writeStr(0, "RIFF");
+  dataView.setUint32(4, 36 + length, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  dataView.setUint32(16, 16, true);
+  dataView.setUint16(20, 1, true);
+  dataView.setUint16(22, numCh, true);
+  dataView.setUint32(24, sampleRate, true);
+  dataView.setUint32(28, sampleRate * numCh * 2, true);
+  dataView.setUint16(32, numCh * 2, true);
+  dataView.setUint16(34, 16, true);
+  writeStr(36, "data");
+  dataView.setUint32(40, length, true);
+
+  const channels = [];
+  for (let c = 0; c < numCh; c++) channels.push(buffer.getChannelData(c));
+  let offset = 44;
+  for (let i = 0; i < buffer.length; i++) {
+    for (let c = 0; c < numCh; c++) {
+      const s = Math.max(-1, Math.min(1, channels[c][i]));
+      dataView.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      offset += 2;
+    }
+  }
+  return new Blob([dataView.buffer], { type: "audio/wav" });
+}
+
+/**
+ * Compute a volume envelope from a decoded AudioBuffer: one RMS amplitude
+ * (0..1) per time bucket, normalized so the loudest bucket is ~1. Quiet
+ * audio yields a near-"dot" bar; louder audio yields taller bars.
+ */
+function audioVolumeEnvelope(buffer, buckets) {
+  const ch = buffer.numberOfChannels;
+  const len = buffer.length;
+  const per = len / buckets;
+  const data = new Array(buckets).fill(0);
+
+  for (let i = 0; i < buckets; i++) {
+    const s0 = Math.floor(i * per);
+    const s1 = Math.max(s0 + 1, Math.floor((i + 1) * per));
+    let sum = 0, count = 0;
+    for (let c = 0; c < ch; c++) {
+      const arr = buffer.getChannelData(c);
+      for (let s = s0; s < s1; s++) {
+        const v = arr[s];
+        sum += v * v;
+        count++;
+      }
+    }
+    data[i] = Math.sqrt(sum / count);
+  }
+
+  let peak = 0;
+  for (const v of data) if (v > peak) peak = v;
+  if (peak <= 0) peak = 1;
+
+  return data.map((v) => 0.06 + 0.94 * Math.min(v / peak, 1));
+}
+
+/** Shared AudioContext for creating AudioBuffers (avoid context limits). */
+let sharedCtx = null;
+function bufferCtx() {
+  if (!sharedCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    sharedCtx = new Ctx();
+  }
+  return sharedCtx;
+}
+
+/** Return a copy of `buffer` covering [startSec, endSec]. */
+function sliceBuffer(buffer, startSec, endSec) {
+  const sr = buffer.sampleRate;
+  const s0 = Math.max(0, Math.floor(startSec * sr));
+  const s1 = Math.min(buffer.length, Math.floor(endSec * sr));
+  const out = bufferCtx().createBuffer(
+    buffer.numberOfChannels,
+    Math.max(1, s1 - s0),
+    sr
+  );
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    out.copyToChannel(buffer.getChannelData(c).subarray(s0, s1), c);
+  }
+  return out;
+}
+
+function fmtTime(secs) {
+  secs = Math.max(0, Math.round(secs));
+  const mm = Math.floor(secs / 60).toString().padStart(2, "0");
+  const ss = (secs % 60).toString().padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+/** Format a (possibly fractional) duration to 2 decimal places, e.g. 2.03. */
+function fmtDur(secs) {
+  return (Number(secs) || 0).toFixed(2);
+}
+
+/* ------------------------------------------------------------------
+   TRIM
+   ------------------------------------------------------------------ */
+function clampTrim() {
+  if (!sourceBuffer) return;
+  const total = sourceBuffer.duration;
+  let s = Number(trim.start) || 0;
+  let e = Number(trim.end) || total;
+  s = Math.max(0, Math.min(s, total - 0.5));
+  e = Math.max(Math.min(e, total), s + 0.5);
+  trim.start = s;
+  trim.end = e;
+}
+
+/** Apply the active trim to the preview + playback audio (live apply). */
+function applyTrim() {
+  if (!sourceBuffer) return;
+  clampTrim();
+
+  const sliced = sliceBuffer(sourceBuffer, trim.start, trim.end);
+  currentDuration = sliced.duration;
+  if (preview) {
+    preview.setDuration(currentDuration);
+    preview.setWaveform(audioVolumeEnvelope(sliced, WAVE_BARS));
+    // Any trim change restarts the preview from the beginning.
+    preview.reset();
+    setPlayLabel(false);
+    setSourceLocked(false);
+  }
+  audio.el.src = URL.createObjectURL(audioBufferToWav(sliced));
+  audio.el.currentTime = 0;
+
+  projectStore.save({
+    sourceBlob,
+    fileName,
+    trim: { start: trim.start, end: trim.end },
+  }).catch(() => {});
+
+  updateTrimUI();
+  els.audioInfo.textContent = fileName;
+  els.audioDuration.textContent = fmtTime(currentDuration);
+}
+
+function resetTrim() {
+  if (!sourceBuffer) return;
+  trim.start = 0;
+  trim.end = sourceBuffer.duration;
+  applyTrim();
+}
+
+function updateTrimUI() {
+  els.trimStart.value = Math.max(0, +fmtDur(trim.start));
+  els.trimEnd.value = +fmtDur(trim.end);
+  const total = sourceBuffer ? fmtTime(sourceBuffer.duration) : "0:00";
+  els.trimDuration.textContent = `Total Duration: ${total}`;
+  els.trimSelected.textContent = fmtTime(trim.end - trim.start);
+  drawTrimWave();
+}
+
+/* --- trim waveform + drag handles (pointer events: mouse + touch) --- */
+const TRIM_BARS = 64;
+
+function drawTrimWave() {
+  const c = els.trimWave;
+  const dpr = window.devicePixelRatio || 1;
+  const bw = c.clientWidth || 640;
+  const bh = c.clientHeight || 72;
+  if (c.width !== Math.round(bw * dpr)) c.width = Math.round(bw * dpr);
+  if (c.height !== Math.round(bh * dpr)) c.height = Math.round(bh * dpr);
+  const ctx = c.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, bw, bh);
+
+  const padL = 6, padR = 6;
+  const innerW = bw - padL - padR;
+  const center = bh / 2;
+  const maxH = bh - 18;
+
+  const total = sourceBuffer ? sourceBuffer.duration : 1;
+  const sX = padL + (trim.start / total) * innerW;
+  const eX = padL + (trim.end / total) * innerW;
+
+  const n = sourceEnvelope.length || TRIM_BARS;
+  const step = innerW / n;
+  const barW = Math.max(1, step * 0.5);
+  const ctxBars = ctx;
+  for (let i = 0; i < n; i++) {
+    const frac = (i + 0.5) / n;
+    const x = padL + i * step + (step - barW) / 2;
+    const amp = sourceEnvelope[i] || 0.3;
+    const h = Math.max(3, amp * maxH);
+    const y = center - h / 2;
+    const selected = frac >= trim.start / total && frac <= trim.end / total;
+    ctxBars.fillStyle = selected
+      ? (preview ? preview.theme.played : cssVar("--brand-orange", "#A8E6CF"))
+      : cssVar("--trim-dim", "rgba(17, 24, 39, 0.12)");
+    ctxBars.fillRect(x, y, barW, h);
+  }
+
+  // Start / end handles.
+  drawHandle(ctx, sX, bh, cssVar("--brand-orange", "#f97316"));
+  drawHandle(ctx, eX, bh, cssVar("--text-main", "#111827"));
+}
+
+function drawHandle(ctx, x, bh, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, 4);
+  ctx.lineTo(x, bh - 4);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, 8, 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+let dragHandle = null; // "start" | "end" | null
+
+function xToTime(clientX) {
+  const rect = els.trimWave.getBoundingClientRect();
+  const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  return (x || 0) * (sourceBuffer ? sourceBuffer.duration : 1);
+}
+
+function onTrimPointerDown(e) {
+  if (!sourceBuffer) return;
+  e.preventDefault();
+  const t = xToTime(e.clientX);
+  const total = sourceBuffer.duration;
+  const ds = Math.abs(t - trim.start);
+  const de = Math.abs(t - trim.end);
+  dragHandle = ds < de ? "start" : "end";
+  els.trimWave.setPointerCapture(e.pointerId);
+}
+
+function onTrimPointerMove(e) {
+  if (!dragHandle || !sourceBuffer) return;
+  const t = xToTime(e.clientX);
+  if (dragHandle === "start") {
+    trim.start = Math.max(0, Math.min(trim.end - 0.5, t));
+  } else {
+    trim.end = Math.min(
+      sourceBuffer.duration,
+      Math.max(trim.start + 0.5, Math.min(MAX_DURATION, t))
+    );
+  }
+  els.trimStart.value = +fmtDur(Math.max(0, trim.start));
+  els.trimEnd.value = +fmtDur(trim.end);
+  els.trimSelected.textContent = fmtTime(trim.end - trim.start);
+  drawTrimWave();
+}
+
+function onTrimPointerUp(e) {
+  if (!dragHandle) return;
+  dragHandle = null;
+  try { els.trimWave.releasePointerCapture(e.pointerId); } catch (_) {}
+  applyTrim();
+}
+
+/* ------------------------------------------------------------------
+   THEME
+   ------------------------------------------------------------------ */
+function themePreviewHtml(t) {
+  return `<i style="background:${t.bg}"></i><i style="background:${t.bubble}"></i><i style="background:${t.played}"></i>`;
+}
+
+function buildThemePicker() {
+  const saved = localStorage.getItem(LS_THEME) || THEMES[0].id;
+  els.themePicker.classList.add("theme-dropdown");
+  els.themePicker.innerHTML = `
+    <button type="button" class="theme-current" aria-haspopup="listbox">
+      <span class="th-preview" id="theme-current-swatches">${themePreviewHtml(THEMES.find((t) => t.id === saved) || THEMES[0])}</span>
+      <span class="theme-name" id="theme-current-name">${(THEMES.find((t) => t.id === saved) || THEMES[0]).name}</span>
+      <span class="theme-caret">▾</span>
+    </button>
+    <div class="theme-menu hidden" id="theme-menu"></div>`;
+  els.themeCurrent = els.themePicker.querySelector(".theme-current");
+  els.themeName = els.themePicker.querySelector("#theme-current-name");
+  els.themeMenu = els.themePicker.querySelector("#theme-menu");
+
+  const currentSwatches = els.themePicker.querySelector("#theme-current-swatches");
+
+  function select(id) {
+    const t = THEMES.find((x) => x.id === id) || THEMES[0];
+    localStorage.setItem(LS_THEME, t.id);
+    els.themeName.textContent = t.name;
+    currentSwatches.innerHTML = themePreviewHtml(t);
+    if (preview) {
+      preview.setTheme(t.id);
+      drawTrimWave();
+    }
+    // Re-apply the theme to the whole Studio UI (see /js/theme.js).
+    if (typeof window.applyInoteTheme === "function") window.applyInoteTheme();
+    [...els.themeMenu.querySelectorAll(".theme-option")].forEach((o) => {
+      const check = o.querySelector(".theme-check");
+      check.textContent = o.dataset.id === t.id ? "✓" : "";
+    });
+  }
+
+  THEMES.forEach((t) => {
+    const opt = document.createElement("button");
+    opt.type = "button";
+    opt.className = "theme-option";
+    opt.dataset.id = t.id;
+    opt.setAttribute("role", "option");
+    opt.innerHTML = `
+      <span class="th-preview">${themePreviewHtml(t)}</span>
+      <span class="theme-name">${t.name}</span>
+      <span class="theme-check">${t.id === saved ? "✓" : ""}</span>`;
+    opt.addEventListener("click", () => {
+      select(t.id);
+      closeThemeMenu();
+    });
+    els.themeMenu.appendChild(opt);
+  });
+
+  function closeThemeMenu() {
+    els.themeMenu.classList.add("hidden");
+    els.themeCurrent.setAttribute("aria-expanded", "false");
+  }
+
+  els.themeCurrent.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isHidden = els.themeMenu.classList.contains("hidden");
+    els.themeMenu.classList.toggle("hidden", !isHidden);
+    els.themeCurrent.setAttribute("aria-expanded", String(isHidden));
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!els.themePicker.contains(e.target)) closeThemeMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeThemeMenu();
+  });
+}
+
+/* ------------------------------------------------------------------
+   AVATAR
+   ------------------------------------------------------------------ */
+async function handleAvatarFile(file) {
+  if (!file || (file.type && !file.type.startsWith("image/"))) {
+    setStatus("", "Please drop an image file.");
+    return;
+  }
+  try {
+    const url = URL.createObjectURL(file);
+    await preview.setAvatar(url);
+    els.avatarPreview.src = url;
+    els.avatarPreview.classList.remove("hidden");
+    setStatus("", "Avatar updated");
+  } catch (err) {
+    console.error(err);
+    resetAvatarUI();
+    setStatus("", "Could not load that image.");
+  }
+}
+function resetAvatarUI() {
+  els.avatarPreview.src = AVATAR_URL;
+  els.avatarPreview.classList.remove("hidden");
+  if (preview) preview.setAvatar(AVATAR_URL);
+}
+function wireAvatar() {
+  els.avatarBox.addEventListener("click", () => els.avatarInput.click());
+  els.avatarInput.addEventListener("change", () => {
+    if (els.avatarInput.files && els.avatarInput.files[0]) {
+      handleAvatarFile(els.avatarInput.files[0]);
+    }
+  });
+  // Restore the default profile image (removes any custom avatar).
+  els.avatarReset.addEventListener("click", () => {
+    resetAvatarUI();
+    setStatus("", "Default profile image restored");
+  });
+  // Drag-and-drop (works on desktop; picker is the mobile fallback).
+  els.avatarBox.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    els.avatarBox.style.boxShadow = `0 0 0 2px ${cssVar("--brand-orange", "#f97316")}`;
+  });
+  els.avatarBox.addEventListener("dragleave", () => {
+    els.avatarBox.style.boxShadow = "";
+  });
+  els.avatarBox.addEventListener("drop", (e) => {
+    e.preventDefault();
+    els.avatarBox.style.boxShadow = "";
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleAvatarFile(f);
+  });
+  // Also allow dropping an avatar anywhere on the stage.
+  const wrap = document.getElementById("stage-wrap");
+  wrap.addEventListener("dragover", (e) => {
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+  });
+  wrap.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleAvatarFile(f);
+  });
+}
+
+/* ------------------------------------------------------------------
+   AUDIO SOURCE LOADING (upload / mic / restore)
+   ------------------------------------------------------------------ */
+async function decodeBlob(blob) {
+  const arrayBuf = await blob.arrayBuffer();
+  return bufferCtx().decodeAudioData(arrayBuf);
+}
+
+async function loadSourceFromBlob(blob, name, restoreTrim = null) {
+  try {
+    const decoded = await decodeBlob(blob);
+    sourceBlob = blob;
+    fileName = name;
+
+    // Cap to MAX_DURATION.
+    let capped = decoded;
+    if (decoded.duration > MAX_DURATION) {
+      capped = sliceBuffer(decoded, 0, MAX_DURATION);
+      setStatus("", `Audio capped to ${fmtTime(MAX_DURATION)}`);
+    }
+    sourceBuffer = capped;
+    sourceEnvelope = audioVolumeEnvelope(sourceBuffer, TRIM_BARS);
+
+    if (restoreTrim && restoreTrim.end > 0) {
+      trim = {
+        start: Math.max(0, Math.min(restoreTrim.start, restoreTrim.end - 0.5)),
+        end: Math.min(capped.duration, Math.max(restoreTrim.end, restoreTrim.start + 0.5)),
+      };
+    } else {
+      trim = { start: 0, end: capped.duration };
+    }
+
+    // New audio means the previous generated MP4 is stale — reset it.
+    lastMp4 = null;
+    els.generateBtn.classList.remove("ready");
+    setGenerateLabel("Generate");
+    setProgress(null);
+    els.stepAudio.classList.add("done");
+    els.stepTrim.classList.add("done");
+    applyTrim();
+    setStatus("", `Audio loaded: ${name}`);
+  } catch (err) {
+    console.error(err);
+    setStatus("", `Audio error: ${err.message}`);
+  }
+}
+
+/* --- microphone recording --- */
+let micRec = null; // { stream, recorder, chunks, timer, startTime }
+
+async function toggleRecord() {
+  if (micRec) {
+    stopRecording();
+    return;
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setStatus("", "Microphone not available in this browser.");
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const chunks = [];
+    const recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = () => {
+      stopMicStream(stream);
+      const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+      clearInterval(micRec && micRec.timer);
+      micRec = null;
+      setRecordLabel(false);
+      setStatus("", "Processing recording…");
+      loadSourceFromBlob(blob, "Voice note");
+    };
+    recorder.start();
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const el = (Date.now() - startTime) / 1000;
+      setStatus("recording", `Recording… ${fmtTime(el)} (max ${fmtTime(MAX_DURATION)})`);
+      if (el >= MAX_DURATION) stopRecording();
+    }, 250);
+    micRec = { stream, recorder, chunks, timer, startTime };
+    setRecordLabel(true);
+    setStatus("recording", "Recording…");
+  } catch (err) {
+    console.error(err);
+    setStatus("", "Microphone permission denied or unavailable.");
+  }
+}
+
+function stopRecording() {
+  if (!micRec) return;
+  if (micRec.recorder.state !== "inactive") micRec.recorder.stop();
+}
+
+function stopMicStream(stream) {
+  (stream.getTracks() || []).forEach((t) => t.stop());
+}
+
+async function handleAudioUpload(file) {
+  if (!file) return;
+  setStatus("", "Decoding audio…");
+  await loadSourceFromBlob(file, file.name);
+}
+
+/* ------------------------------------------------------------------
+   PERSISTENCE (IndexedDB) — Option B
+   ------------------------------------------------------------------ */
+const projectStore = (() => {
+  const DB = "insta-notes-studio";
+  const STORE = "project";
+  const KEY = "current";
+  let db = null;
+
+  function open() {
+    return new Promise((resolve, reject) => {
+      if (db) return resolve(db);
+      const req = indexedDB.open(DB, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE);
+      };
+      req.onsuccess = () => { db = req.result; resolve(db); };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function get(store) {
+    return new Promise((resolve, reject) => {
+      const tx = store.transaction([STORE], "readonly");
+      const r = tx.objectStore(STORE).get(KEY);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  async function put(store, val) {
+    return new Promise((resolve, reject) => {
+      const tx = store.transaction([STORE], "readwrite");
+      tx.objectStore(STORE).put(val, KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function remove(store) {
+    return new Promise((resolve, reject) => {
+      const tx = store.transaction([STORE], "readwrite");
+      tx.objectStore(STORE).delete(KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  return {
+    async save(payload) {
+      try {
+        const s = await open();
+        await put(s, payload);
+      } catch (e) { console.warn("Could not persist project:", e); }
+    },
+    async load() {
+      try {
+        const s = await open();
+        return await get(s);
+      } catch (e) { console.warn("Could not restore project:", e); return null; }
+    },
+    async clear() {
+      try {
+        const s = await open();
+        await remove(s);
+      } catch (e) { console.warn("Could not clear project:", e); }
+    },
+  };
+})();
+
+/* ------------------------------------------------------------------
+   MP4 CONVERSION
+   ------------------------------------------------------------------ */
+async function convertToMp4(webmBlob) {
+  setStatus("", "Loading FFmpeg.wasm…");
+  setProgress(-1);
+
+  const mods = await Promise.all([
+    import("/vendor/ffmpeg-mod/index.js"),
+    import("/vendor/util/index.js"),
+  ]);
+  const { FFmpeg } = mods[0];
+  const { fetchFile } = mods[1];
+
+  const ffmpeg = new FFmpeg();
+  ffmpeg.on("log", ({ message }) => {
+    console.log("[ffmpeg]", message);
+    const m = String(message).match(/time=(\d+):(\d+):(\d+(?:\.\d+)?)/);
+    if (m && currentDuration) {
+      const secs = (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
+      const pct = Math.max(0, Math.min(100, (secs / currentDuration) * 100));
+      setStatus("", `Converting… ${pct.toFixed(0)}%`);
+      setProgress(pct);
+    }
+  });
+  ffmpeg.on("progress", () => {});
+
+  await ffmpeg.load({
+    classWorkerURL: "./worker.js",
+    coreURL: "/vendor/ffmpeg-core.js",
+    wasmURL: "/vendor/ffmpeg-core.wasm",
+  });
+
+  await ffmpeg.writeFile("input.webm", await fetchFile(webmBlob));
+  setStatus("", "Converting WebM → MP4…");
+
+  await ffmpeg.exec([
+    "-i", "input.webm",
+    "-filter:v", "fps=60",
+    "-c:v", "libx264",
+    "-preset", "veryfast",
+    "-crf", "18",
+    "-pix_fmt", "yuv420p",
+    "-c:a", "aac",
+    "-b:a", "128k",
+    "-movflags", "+faststart",
+    "output.mp4",
+  ]);
+
+  const data = await ffmpeg.readFile("output.mp4");
+  const mp4Blob = new Blob([data], { type: "video/mp4" });
+
+  await ffmpeg.deleteFile("input.webm");
+  await ffmpeg.deleteFile("output.mp4");
+  ffmpeg.terminate();
+
+  return mp4Blob;
+}
+
+/* ------------------------------------------------------------------
+   MAIN FLOW
+   ------------------------------------------------------------------ */
+async function fillScene() {
+  const savedTheme = localStorage.getItem(LS_THEME) || THEMES[0].id;
+  preview = new Preview(els.scene, { audio, metrics }, {
+    duration: currentDuration,
+    theme: THEMES.find((t) => t.id === savedTheme) || THEMES[0],
+    onDone: () => {
+      setPlayLabel(false);
+      setSourceLocked(false);
+    },
+  });
+  await preview.loadAssets();
+}
+
+async function loadInitialAudio() {
+  const restored = await projectStore.load();
+  if (restored && restored.sourceBlob) {
+    await loadSourceFromBlob(restored.sourceBlob, restored.fileName || "Restored audio", restored.trim);
+  } else {
+    try {
+      const res = await fetch("/assets/demo.mp3");
+      await loadSourceFromBlob(await res.blob(), "demo.mp3");
+    } catch (err) {
+      console.warn("Could not load default audio:", err);
+    }
+  }
+}
+
+const LOCKABLE = [
+  els.playBtn,
+  els.uploadBtn,
+  els.recordBtn,
+  els.trimStart,
+  els.trimEnd,
+  els.trimReset,
+];
+
+/** Disable user-facing controls (avatar, theme, audio, trim) while busy. */
+function setControlsLocked(locked) {
+  LOCKABLE.forEach((el) => {
+    if (el) el.disabled = locked;
+  });
+  els.avatarBox.classList.toggle("locked", locked);
+  els.themePicker.classList.toggle("locked", locked);
+  els.trimWave.classList.toggle("locked", locked);
+}
+
+const SOURCE_LOCKABLE = [
+  els.uploadBtn,
+  els.recordBtn,
+  els.trimStart,
+  els.trimEnd,
+  els.trimReset,
+];
+
+/** Lock audio-source + trim controls while previewing, keeping avatar and
+ *  theme editable (visual-only changes are safe mid-preview). */
+function setSourceLocked(locked) {
+  SOURCE_LOCKABLE.forEach((el) => {
+    if (el) el.disabled = locked;
+  });
+  els.trimWave.classList.toggle("locked", locked);
+}
+
+async function runGenerate() {
+  if (busy) return;
+  busy = true;
+  // Lock everything (avatar, theme, audio source, trim) while recording and
+  // converting so the scene cannot change mid-render (WYSIWYG).
+  setControlsLocked(true);
+  els.generateBtn.disabled = true;
+  els.playBtn.disabled = true;
+  els.generateBtn.classList.remove("ready");
+  // A new generate invalidates any previously produced MP4.
+  lastMp4 = null;
+  setGenerateLabel("Preparing…");
+  setStatus("", "Preparing recorder…");
+
+  try {
+    const capture = ensureAudioCapture();
+    if (capture && capture.ctx.state === "suspended") capture.ctx.resume().catch(() => {});
+    if (capture) capture.setAudible(false);
+
+    recorder = new Recorder(els.scene, {
+      filePrefix: "insta-notes",
+      audioTrack: capture ? capture.track : null,
+    });
+    if (!recorder.supports()) {
+      els.unsupported.classList.remove("hidden");
+      return;
+    }
+    await recorder.prepare();
+
+    const startupT0 = performance.now();
+    recorder.start();
+    const startRec = performance.now();
+    setGenerateLabel("Recording…");
+    setStatus("recording", "Recording…");
+    // Always record from the very start, even if the preview was mid-play.
+    preview.reset();
+    preview.play();
+
+    const startupMs = startRec - startupT0;
+
+    // Auto-stop when the timeline completes (elapsed-based, so an auto-pause
+    // from a hidden tab does not falsely finish the recording). Progress
+    // fills the generate button with color while recording.
+    await new Promise((resolve) => {
+      const check = setInterval(() => {
+        const dur = preview.timeline.duration;
+        if (preview.timeline.elapsed >= dur) {
+          clearInterval(check);
+          resolve();
+        } else {
+          setProgress((preview.timeline.elapsed / dur) * 100);
+        }
+      }, 100);
+    });
+
+    const exportT0 = performance.now();
+    const { blob } = await recorder.stop();
+    const exportMs = performance.now() - exportT0;
+
+    metricRecordAll(blob, startupMs, exportMs);
+    if (audioCapture) audioCapture.setAudible(true);
+
+    // Convert WebM → MP4 as part of the Generate step.
+    setGenerateLabel("Converting…");
+    const convT0 = performance.now();
+    const mp4Blob = await convertToMp4(blob);
+    const convMs = performance.now() - convT0;
+    metrics.record("Conversion (WebM→MP4) duration", `${convMs.toFixed(0)} ms`);
+    metrics.record("MP4 file size", `${(mp4Blob.size / 1024 / 1024).toFixed(2)} MB`);
+    lastMp4 = mp4Blob;
+
+    setProgress(100);
+    els.generateBtn.classList.add("ready");
+    setGenerateLabel("Download");
+    setStatus("", "MP4 ready — press Download");
+    setTimeout(() => setProgress(null), 800);
+  } catch (err) {
+    console.error(err);
+    if (audioCapture) audioCapture.setAudible(true);
+    setStatus("", `Error: ${err.message}`);
+  } finally {
+    busy = false;
+    setProgress(null);
+    setControlsLocked(false);
+    els.generateBtn.disabled = false;
+    els.playBtn.disabled = false;
+    if (!lastMp4) setGenerateLabel("Generate");
+    setPlayLabel(false);
+  }
+}
+
+async function runConvert() {
+  if (!lastMp4) return;
+  Recorder.download(lastMp4, "insta-notes.mp4");
+  setStatus("exported", "Downloaded insta-notes.mp4");
+}
+
+function metricRecordAll(blob, startupMs, exportMs) {
+  const previewScale = els.scene.scrollWidth ? els.scene.getBoundingClientRect().width / WIDTH : 0;
+  metrics.record("Scene resolution", "1080 × 360");
+  metrics.record("Target FPS", "60");
+  metrics.record("Duration", `${fmtDur(currentDuration)} s`);
+  metrics.record("Recording startup delay", `${startupMs.toFixed(0)} ms`);
+  metrics.record("Export (stop) duration", `${exportMs.toFixed(0)} ms`);
+  metrics.record("WebM file size", `${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+  metrics.record("Preview scale", `${(previewScale * 100).toFixed(0)}%`);
+}
+
+async function playPreview() {
+  if (busy) return;
+  const capture = ensureAudioCapture();
+  if (capture) {
+    if (capture.ctx.state === "suspended") capture.ctx.resume().catch(() => {});
+    capture.setAudible(true);
+  }
+
+  if (preview.timeline.running) {
+    preview.pause();
+    setSourceLocked(false);
+    setPlayLabel(false);
+    setStatus("", "Preview paused");
+  } else if (preview.timeline.elapsed >= preview.timeline.duration) {
+    // Finished previously — restart from the beginning.
+    preview.play();
+    setSourceLocked(true);
+    setPlayLabel(true);
+    setStatus("", "Preview playing");
+  } else {
+    preview.resume();
+    setSourceLocked(true);
+    setPlayLabel(true);
+    setStatus("", "Preview playing");
+  }
+}
+
+async function resetProject() {
+  await projectStore.clear().catch(() => {});
+  localStorage.removeItem(LS_THEME);
+  location.reload();
+}
+
+async function removeAudio() {
+  await projectStore.clear().catch(() => {});
+  location.reload();
+}
+
+function wire() {
+  els.generateBtn.addEventListener("click", () => {
+    if (lastMp4) {
+      void runConvert();
+    } else {
+      void runGenerate();
+    }
+  });
+  els.uploadBtn.addEventListener("click", () => els.audioInput.click());
+  els.audioInput.addEventListener("change", async () => {
+    const file = els.audioInput.files && els.audioInput.files[0];
+    if (file) await handleAudioUpload(file);
+    els.audioInput.value = "";
+  });
+  els.recordBtn.addEventListener("click", toggleRecord);
+  els.playBtn.addEventListener("click", () => {
+    void playPreview();
+  });
+  els.resetBtn.addEventListener("click", () => {
+    void resetProject();
+  });
+  els.fileRemove.addEventListener("click", () => {
+    void removeAudio();
+  });
+
+  // Trim controls.
+  els.trimStart.addEventListener("change", () => {
+    trim.start = Number(els.trimStart.value) || 0;
+    applyTrim();
+  });
+  els.trimEnd.addEventListener("change", () => {
+    trim.end = Number(els.trimEnd.value) || (sourceBuffer ? sourceBuffer.duration : MAX_DURATION);
+    applyTrim();
+  });
+  els.trimReset.addEventListener("click", resetTrim);
+
+  // Trim waveform pointer handling.
+  els.trimWave.addEventListener("pointerdown", onTrimPointerDown);
+  els.trimWave.addEventListener("pointermove", onTrimPointerMove);
+  els.trimWave.addEventListener("pointerup", onTrimPointerUp);
+  els.trimWave.addEventListener("pointercancel", onTrimPointerUp);
+
+  wireAvatar();
+  buildThemePicker();
+
+  // Auto-pause/resume when the tab is hidden/visible. Browsers throttle
+  // requestAnimationFrame in background tabs, which would freeze the canvas
+  // while audio + the timeline clock keep advancing (playhead jumps). Pausing
+  // timeline, audio and MediaRecorder keeps preview and export in lockstep.
+  let hiddenPaused = false;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (preview && preview.timeline.running && !hiddenPaused) {
+        hiddenPaused = true;
+        preview.pause();
+        if (recorder) recorder.pause();
+        if (!busy) setSourceLocked(false); // release source controls when preview auto-paused
+        setPlayLabel(false);
+        setStatus("", "Paused (tab hidden)");
+      }
+    } else if (hiddenPaused) {
+      hiddenPaused = false;
+      if (preview) {
+        preview.resume();
+        if (recorder) recorder.resume();
+        if (!busy) setSourceLocked(true);
+        setPlayLabel(true);
+        setStatus(busy ? "recording" : "", busy ? "Recording…" : "Preview playing");
+      }
+    }
+  });
+
+  // Debug metrics panel — collapsible (only visible with ?debug=1).
+  els.metricsToggle.addEventListener("click", () => {
+    const collapsed = els.metrics.getAttribute("data-collapsed") === "true";
+    els.metrics.setAttribute("data-collapsed", String(!collapsed));
+    els.metricsToggle.setAttribute("aria-expanded", String(!collapsed));
+  });
+
+  window.addEventListener("resize", drawTrimWave);
+}
+
+async function init() {
+  wire();
+
+  const ok =
+    typeof window.MediaRecorder !== "undefined" &&
+    typeof HTMLCanvasElement.prototype.captureStream === "function";
+  if (!ok) {
+    els.unsupported.classList.remove("hidden");
+    els.generateBtn.disabled = true;
+    els.playBtn.disabled = true;
+    els.uploadBtn.disabled = true;
+    els.recordBtn.disabled = true;
+    return;
+  }
+
+  await fillScene();
+  await loadInitialAudio();
+
+  setStatus("", "Ready");
+  els.playBtn.disabled = false;
+  els.generateBtn.disabled = false;
+}
+
+init();
+
+// Expose for potential debugging from the console.
+export const __WIDTH = WIDTH;
