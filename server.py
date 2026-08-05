@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = Path(__file__).resolve().parent
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 app = FastAPI(title="Insta Notes Studio")
 
@@ -16,12 +17,12 @@ app.mount("/vendor", StaticFiles(directory=BASE_DIR / "vendor"), name="vendor")
 
 @app.get("/", include_in_schema=False)
 def index() -> Response:
-    return FileResponse(BASE_DIR / "landing.html")
+    return FileResponse(TEMPLATES_DIR / "landing.html")
 
 
 @app.get("/studio", include_in_schema=False)
 def studio() -> Response:
-    return FileResponse(BASE_DIR / "studio.html")
+    return FileResponse(TEMPLATES_DIR / "studio.html")
 
 
 if __name__ == "__main__":

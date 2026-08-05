@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insta Notes Studio</title>
+    <meta name="description" content="Turn voice notes into beautiful animated videos — entirely in your browser. Private, free, no upload." />
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/landing.css" />
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo-group">
+                <div class="logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5v14M22 10v4M7 5v14M2 10v4"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Insta Notes Studio</span>
+            </div>
+
+            <div class="privacy-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                100% Local • Private • No Tracking
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Turn Voice Notes<br>
+                    <span class="highlight">into Beautiful Videos.</span>
+                </h1>
+                <p class="hero-desc">
+                    Create Instagram-style voice note animations entirely in your browser. No apps, no uploads, no watermark.
+                </p>
+
+                <a class="btn-primary" href="/studio">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="20" x2="12" y2="10"></line>
+                        <line x1="18" y1="20" x2="18" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="16"></line>
+                    </svg>
+                    Start Creating
+                </a>
+            </div>
+
+            <div class="hero-graphic">
+                <div class="note-card">
+                    <div class="note-frame" id="note-frame">
+                        <div class="note" id="hero-note">
+                            <div class="note-bubble"></div>
+                            <img class="note-avatar" src="/assets/insta-default.jpg" alt="Voice note avatar" />
+                            <div class="note-wave" id="hero-wave"></div>
+                            <div class="note-time" id="hero-time">0:08</div>
+                        </div>
+                    </div>
+
+                    <div class="note-footer">
+                        <div><span class="status-dot"></span> Live Preview</div>
+                        <a class="try-link" href="/studio">
+                            Try it out in the studio
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="section-head reveal">
+                <span class="eyebrow">Why Insta Notes</span>
+                <h2>Everything you need, nothing you don't</h2>
+                <p>A focused toolkit built for creators who care about their privacy.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card reveal">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <h3>100% Private</h3>
+                        <p>Everything stays on your device. Your audio never leaves your browser.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <h3>No Upload</h3>
+                        <p>We don't collect, store, or track any of your data. Ever.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <h3>Lightning Fast</h3>
+                        <p>Record, preview and export your video in seconds.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <h3>Custom Avatars</h3>
+                        <p>Drop in any photo — your note instantly features your own face.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                            <path d="M2 12h20"></path>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <h3>60 FPS Export</h3>
+                        <p>Buttery-smooth MP4 videos, encoded locally with FFmpeg.wasm.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20M17 5v14M22 10v4M7 5v14M2 10v4"></path>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <h3>Record Voice Notes</h3>
+                        <p>Record straight from the mic and trim to the perfect length.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works reveal">
+            <div class="section-head">
+                <span class="eyebrow">How it works</span>
+                <h2>Create your video in 3 simple steps</h2>
+            </div>
+
+            <div class="steps-container">
+                <div class="steps-line"></div>
+
+                <div class="step reveal">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <h4>1. Upload or Record</h4>
+                    <p>Upload an audio file or record your voice note directly.</p>
+                </div>
+
+                <div class="step reveal">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="4" y1="21" x2="4" y2="14"></line>
+                            <line x1="4" y1="10" x2="4" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="3"></line>
+                            <line x1="20" y1="21" x2="20" y2="16"></line>
+                            <line x1="20" y1="12" x2="20" y2="3"></line>
+                            <line x1="1" y1="14" x2="7" y2="14"></line>
+                            <line x1="9" y1="8" x2="15" y2="8"></line>
+                            <line x1="17" y1="16" x2="23" y2="16"></line>
+                        </svg>
+                    </div>
+                    <h4>2. Customize</h4>
+                    <p>Choose avatar, theme, and trim your audio to perfection.</p>
+                </div>
+
+                <div class="step reveal">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </div>
+                    <h4>3. Export</h4>
+                    <p>Preview and export as MP4 video. Ready to share anywhere.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="privacy-priority reveal">
+            <div class="shield-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+            </div>
+
+            <div class="privacy-content">
+                <h3>Your Privacy is Our Priority</h3>
+                <p>Everything you do is processed locally in your browser. We don't collect, store, or track any of your data.</p>
+
+                <div class="tech-stack">
+                    <span>Powered by</span>
+                    <div class="tech-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <path d="M2 15h10"></path>
+                            <path d="m9 18 3-3-3-3"></path>
+                        </svg>
+                        FFmpeg.wasm
+                    </div>
+                    <div class="tech-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                        </svg>
+                        Canvas
+                    </div>
+                    <div class="tech-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="16"></line>
+                        </svg>
+                        Web Audio API
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="faq" class="faq">
+            <div class="section-head reveal">
+                <span class="eyebrow">FAQ</span>
+                <h2>Frequently asked questions</h2>
+            </div>
+
+            <div class="faq-grid">
+                <div class="faq-item reveal">
+                    <h4><span class="q">Q.</span> Do I need an account?</h4>
+                    <p>No. There are no accounts, no logins, and no data leaves your browser. Just open the studio and start creating.</p>
+                </div>
+                <div class="faq-item reveal">
+                    <h4><span class="q">Q.</span> Where is my audio uploaded?</h4>
+                    <p>Nowhere. Recording, editing, and rendering all happen on your device. Close the tab and everything is gone.</p>
+                </div>
+                <div class="faq-item reveal">
+                    <h4><span class="q">Q.</span> What formats are supported?</h4>
+                    <p>Upload MP3, WAV, M4A or OGG audio, or record straight from your microphone. Export your video as MP4.</p>
+                </div>
+                <div class="faq-item reveal">
+                    <h4><span class="q">Q.</span> Is there a length limit?</h4>
+                    <p>Voice notes are capped at 3 minutes so they stay punchy and load fast. You can trim any upload to the perfect length.</p>
+                </div>
+                <div class="faq-item reveal">
+                    <h4><span class="q">Q.</span> Can I use my own photo as the avatar?</h4>
+                    <p>Yes — drop any image onto the preview or use the built-in picker. The avatar is rendered right into your exported video.</p>
+                </div>
+                <div class="faq-item reveal">
+                    <h4><span class="q">Q.</span> Does it work offline?</h4>
+                    <p>The app itself runs entirely in your browser. Only the Inter font is loaded from Google's CDN; everything else is local.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="final-cta reveal">
+            <h2>Ready to create your first voice note video?</h2>
+            <p>Free, private, and ready in seconds. No sign-up required.</p>
+            <a class="btn-primary" href="/studio">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Open the Studio
+            </a>
+        </section>
+
+        <footer class="footer">
+            <div>Made with <span class="heart">❤︎</span> for creators who care about privacy.</div>
+            <div class="footer-links">
+                <a href="/studio">Studio</a>
+                <a href="#features">Features</a>
+                <a href="#faq">FAQ</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        (function () {
+            // Theme colors come from /js/theme.js (window.InoteTheme + CSS vars),
+            // which reads the same localStorage key the Studio persists. The CSS
+            // here simply consumes --scene-* / --note-* custom properties.
+
+            var frame = document.getElementById('note-frame');
+            var note = document.getElementById('hero-note');
+            var wave = document.getElementById('hero-wave');
+            var timeEl = document.getElementById('hero-time');
+
+            // --- Build the 40 bars at EXACT export geometry (1080x360) ---
+            // From preview.js: 40 bars, step 16.4, width 8.2, max height 118,
+            // min 8; wave starts at x=228, timer right-aligned at x=980.
+            var N = 40, DUR = 8, CY = 71, MAX_H = 118;
+            var bars = [];
+            for (var i = 0; i < N; i++) {
+                var v = Math.abs(Math.sin(i * 0.62)) * 0.55
+                      + Math.abs(Math.sin(i * 1.31 + 1.7)) * 0.3
+                      + Math.abs(Math.sin(i * 3.7 + 0.6)) * 0.15;
+                var amp = 0.25 + 0.75 * Math.min(v, 1);
+                var h = Math.max(amp * MAX_H, 8);
+                var b = document.createElement('div');
+                b.className = 'note-bar';
+                // Bars are positioned inside .note-wave (already offset to x=228
+                // in CSS), so only the per-bar step offset applies here.
+                b.style.left = (i * 16.4 + 4.1) + 'px';
+                b.style.top = (CY - h / 2) + 'px';
+                b.style.height = h + 'px';
+                wave.appendChild(b);
+                bars.push(b);
+            }
+            var playhead = document.createElement('div');
+            playhead.className = 'note-playhead';
+            wave.appendChild(playhead);
+
+            // --- Scale the 1080x360 note down to fit its container ---
+            function fitNote() {
+                note.style.transform = 'scale(' + (frame.clientWidth / 1080) + ')';
+            }
+            window.addEventListener('resize', fitNote);
+            fitNote();
+
+            // --- Animate the live preview (countdown + playhead + played bars) ---
+            var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduceMotion) {
+                var mid = Math.floor(N * 0.5);
+                bars.forEach(function (b, k) { if (k <= mid) b.classList.add('played'); });
+                playhead.style.left = '328px';
+                timeEl.textContent = '0:04';
+            } else {
+                var t0 = null;
+                function frame(ts) {
+                    if (t0 === null) t0 = ts;
+                    var t = ((ts - t0) / 1000) % DUR;
+                    var p = t / DUR;
+                    var idx = Math.floor(p * N);
+                    for (var k = 0; k < N; k++) bars[k].classList.toggle('played', k <= idx);
+                    playhead.style.left = (656 * p) + 'px';
+                    var secs = Math.ceil(DUR - t);
+                    timeEl.textContent = '0:' + (secs < 10 ? '0' : '') + secs;
+                    requestAnimationFrame(frame);
+                }
+                requestAnimationFrame(frame);
+            }
+
+            // --- Scroll reveal: toggles every time an element enters/exits
+            // view, so the animation plays again on each scroll pass. ---
+            var items = document.querySelectorAll('.reveal');
+            if (reduceMotion || !('IntersectionObserver' in window)) {
+                items.forEach(function (el) { el.classList.add('visible'); });
+                return;
+            }
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    var delay = entry.target.getAttribute('data-reveal-delay') || 0;
+                    entry.target.style.transitionDelay = delay + 'ms';
+                    entry.target.classList.toggle('visible', entry.isIntersecting);
+                });
+            }, { threshold: 0.15 });
+            items.forEach(function (el, idx) {
+                var parent = el.parentElement;
+                if (parent && parent.classList.contains('features-grid')) {
+                    el.setAttribute('data-reveal-delay', (idx % 3) * 80);
+                } else if (parent && parent.classList.contains('faq-grid')) {
+                    el.setAttribute('data-reveal-delay', (idx % 2) * 100);
+                }
+                io.observe(el);
+            });
+        })();
+    </script>
+</body>
+</html>
