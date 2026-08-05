@@ -830,7 +830,9 @@ async function fillScene() {
     theme: THEMES.find((t) => t.id === savedTheme) || THEMES[0],
     onDone: () => {
       setPlayLabel(false);
-      setSourceLocked(false);
+      // Don't release the audio/trim controls mid-generate: the timeline
+      // finishing is what stops recording, but conversion is still running.
+      if (!busy) setSourceLocked(false);
     },
   });
   await preview.loadAssets();

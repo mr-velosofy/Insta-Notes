@@ -668,7 +668,9 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-generate.busy svg { display: none; }
 
-/* Progress fills the button itself with color. */
+/* Progress fills the button itself with color. The button base is the theme's
+   accent color, so the fill uses the button's text color as a translucent
+   wash — a same-color gradient would be invisible against it. */
 .generate-fill {
   position: absolute;
   top: 0;
@@ -676,8 +678,12 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   left: 0;
   width: 0%;
   z-index: 0;
-  background: linear-gradient(90deg, var(--accent-soft-2, #fb923c), var(--brand-orange));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.55));
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--btn-primary-fg, #fff) 22%, transparent),
+    color-mix(in srgb, var(--btn-primary-fg, #fff) 48%, transparent));
   transition: width 0.2s linear;
+  pointer-events: none;
 }
 .generate-fill.indeterminate {
   width: 30%;
