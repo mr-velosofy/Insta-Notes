@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# MD Files
+*.md
+
 # C extensions
 *.so
 
