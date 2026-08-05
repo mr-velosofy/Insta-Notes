@@ -15,6 +15,11 @@ app.mount("/assets", StaticFiles(directory=BASE_DIR / "assets"), name="assets")
 app.mount("/vendor", StaticFiles(directory=BASE_DIR / "vendor"), name="vendor")
 
 
+@app.get("/ping", include_in_schema=False)
+def ping() -> Response:
+    return Response("pong", media_type="text/plain")
+
+
 @app.get("/", include_in_schema=False)
 def index() -> Response:
     return FileResponse(TEMPLATES_DIR / "landing.html")
