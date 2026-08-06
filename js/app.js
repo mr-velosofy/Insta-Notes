@@ -35,14 +35,16 @@ const els = {
   audioInput: document.getElementById("audio-input"),
   audioInfo: document.getElementById("audio-info"),
   audioDuration: document.getElementById("audio-duration"),
+  activeFile: document.getElementById("active-file"),
   fileRemove: document.getElementById("file-remove"),
   trimWave: document.getElementById("trim-wave"),
-  trimDuration: document.getElementById("trim-duration"),
   trimSelected: document.getElementById("trim-duration-selected"),
   trimStart: document.getElementById("trim-start"),
   trimEnd: document.getElementById("trim-end"),
   trimReset: document.getElementById("trim-reset"),
   playBtn: document.getElementById("play-btn"),
+  playIcon: document.getElementById("play-icon"),
+  playLabel: document.getElementById("play-label"),
   generateBtn: document.getElementById("generate-btn"),
   generateFill: document.getElementById("generate-fill"),
   generateLabel: document.getElementById("generate-label"),
@@ -71,9 +73,10 @@ function cssVar(name, fallback) {
 const PLAY_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
 const PAUSE_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>`;
 
-/** Swap the play/pause icon on the round preview button. */
+/** Swap the play/pause icon + label on the Preview button. */
 function setPlayLabel(playing) {
-  els.playBtn.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+  els.playIcon.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+  els.playLabel.textContent = playing ? "Pause" : "Preview";
   els.playBtn.setAttribute("aria-label", playing ? "Pause preview" : "Play preview");
 }
 
@@ -329,7 +332,7 @@ function applyTrim() {
 
   updateTrimUI();
   els.audioInfo.textContent = fileName;
-  els.audioDuration.textContent = fmtTime(currentDuration);
+  els.audioDuration.textContent = fmtTime(sourceBuffer.duration);
 }
 
 function resetTrim() {
@@ -342,8 +345,6 @@ function resetTrim() {
 function updateTrimUI() {
   els.trimStart.value = Math.max(0, +fmtDur(trim.start));
   els.trimEnd.value = +fmtDur(trim.end);
-  const total = sourceBuffer ? fmtTime(sourceBuffer.duration) : "0:00";
-  els.trimDuration.textContent = `Total Duration: ${total}`;
   els.trimSelected.textContent = fmtTime(trim.end - trim.start);
   drawTrimWave();
 }
@@ -859,6 +860,7 @@ const LOCKABLE = [
   els.trimStart,
   els.trimEnd,
   els.trimReset,
+  els.fileRemove,
 ];
 
 /** Disable user-facing controls (avatar, theme, audio, trim) while busy. */
@@ -869,6 +871,7 @@ function setControlsLocked(locked) {
   els.avatarBox.classList.toggle("locked", locked);
   els.themePicker.classList.toggle("locked", locked);
   els.trimWave.classList.toggle("locked", locked);
+  if (els.activeFile) els.activeFile.classList.toggle("locked", locked);
 }
 
 const SOURCE_LOCKABLE = [
@@ -877,6 +880,7 @@ const SOURCE_LOCKABLE = [
   els.trimStart,
   els.trimEnd,
   els.trimReset,
+  els.fileRemove,
 ];
 
 /** Lock audio-source + trim controls while previewing, keeping avatar and
@@ -886,6 +890,7 @@ function setSourceLocked(locked) {
     if (el) el.disabled = locked;
   });
   els.trimWave.classList.toggle("locked", locked);
+  if (els.activeFile) els.activeFile.classList.toggle("locked", locked);
 }
 
 async function runGenerate() {

@@ -32,7 +32,7 @@
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                     <path d="M3 3v5h5"></path>
                 </svg>
-                Reset Project
+                <span class="reset-text">Reset Project</span>
             </button>
         </header>
 
@@ -45,7 +45,6 @@
 
                     <div class="avatar-selector">
                         <div id="avatar-box" class="avatar-preview" title="Drop an image or click to browse">
-                            <div class="avatar-eyes"></div>
                             <img id="avatar-preview" src="/assets/insta-default.jpg" alt="Avatar preview" />
                             <div class="avatar-edit-badge">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -91,7 +90,7 @@
                 </div>
                 <input id="audio-input" type="file" accept="audio/*" hidden />
 
-                <div class="active-file">
+                <div class="active-file" id="active-file">
                     <div class="file-info">
                         <div class="file-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -118,8 +117,8 @@
             <!-- Trim Audio -->
             <div class="panel panel-trim">
                 <div id="step-trim" class="trim-panel-header">
-                    <h2 class="trim-title">3. Trim Audio <span class="step-check">✓</span></h2>
-                    <span id="trim-duration" class="trim-total">Total Duration: 0:00</span>
+                    <h2 class="trim-title">3. Trim Audio</h2>
+                    <span class="step-check">✓</span>
                 </div>
 
                 <div class="trimmer-container">
@@ -155,15 +154,13 @@
                     <canvas id="scene" width="1080" height="360" aria-label="Preview scene"></canvas>
                 </div>
 
-                <div class="preview-controls">
-                    <button id="play-btn" class="play-btn" type="button" aria-label="Play preview" disabled>
-                        <svg viewBox="0 0 24 24" fill="currentColor">
+                <div class="action-row">
+                    <button id="play-btn" class="btn-preview" type="button" aria-label="Play preview" disabled>
+                        <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
+                        <span id="play-label">Preview</span>
                     </button>
-                </div>
-
-                <div class="generate-row">
                     <button id="generate-btn" class="btn-generate" type="button" disabled>
                         <span id="generate-fill" class="generate-fill" aria-hidden="true"></span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

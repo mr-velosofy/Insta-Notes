@@ -219,7 +219,6 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   border-radius: 50%;
   background-color: #312e81; /* Indigo base */
   position: relative;
-  overflow: hidden;
   border: 2px solid var(--card-bg);
   box-shadow: 0 0 0 2px var(--panel-border, #e5e7eb);
   cursor: pointer;
@@ -228,20 +227,6 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .avatar-preview:hover { box-shadow: 0 0 0 2px var(--brand-orange); }
 .avatar-preview.locked { opacity: 0.5; pointer-events: none; }
-
-/* Simulating the avatar face (fallback behind the chosen image) */
-.avatar-preview::after {
-  content: ""; position: absolute; bottom: -10%; left: 50%; transform: translateX(-50%);
-  width: 80%; height: 60%; background-color: #4338ca; border-radius: 50% 50% 0 0;
-}
-.avatar-preview::before {
-  content: ""; position: absolute; top: 25%; left: 50%; transform: translateX(-50%);
-  width: 45%; height: 45%; background-color: #ffedd5; border-radius: 50%; z-index: 1;
-}
-.avatar-eyes {
-  position: absolute; top: 45%; left: 50%; transform: translateX(-50%);
-  width: 30px; height: 8px; background-color: #1e1b4b; border-radius: 10px; z-index: 2;
-}
 
 #avatar-preview {
   position: relative;
@@ -270,11 +255,12 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   background-color: var(--accent-soft, rgba(249, 115, 22, 0.12));
 }
 
-/* Pencil overlay on the avatar circle — signals it is customizable. */
+/* Pencil overlay on the avatar circle — straddles the edge, slightly above
+   and to the left of the bottom-right corner. */
 .avatar-edit-badge {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  bottom: -2px;
+  right: -2px;
   z-index: 6;
   width: 24px;
   height: 24px;
@@ -500,6 +486,12 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .btn-icon:hover { color: var(--text-main); }
 .btn-icon svg { width: 18px; height: 18px; }
 
+/* The active-file row is disabled while previewing, recording or rendering. */
+.active-file.locked {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* --- Local Privacy Notice --- */
 .privacy-notice {
   background-color: var(--accent-soft, #fff7ed);
@@ -533,27 +525,32 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   border-radius: 12px;
 }
 
-/* Play button sits in its own centered row below the preview stage. */
-.preview-controls {
+/* Preview + Generate buttons sit side-by-side in a centered row. */
+.action-row {
   display: flex;
   justify-content: center;
-  margin-top: 14px;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
 }
-.play-btn {
-  width: 52px;
-  height: 52px;
-  background-color: var(--btn-primary-bg, #111);
-  color: var(--btn-primary-fg, white);
-  border-radius: 50%;
+.btn-preview {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s, background-color 0.2s;
+  gap: 10px;
+  min-width: 220px;
+  background-color: var(--btn-bg-light);
+  color: var(--text-main);
+  border: 1px solid var(--panel-border);
+  padding: 14px 40px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.2s;
 }
-.play-btn:hover:not(:disabled) { transform: scale(1.08); background-color: var(--btn-primary-hover, #000); }
-.play-btn svg { width: 22px; height: 22px; margin-left: 2px; }
-.play-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-preview:hover:not(:disabled) { background-color: var(--btn-bg-hover); transform: translateY(-1px); }
+.btn-preview svg { width: 18px; height: 18px; }
+.btn-preview:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* --- Trim Audio Panel --- */
 .trim-panel-header {
@@ -563,7 +560,6 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   margin-bottom: 24px;
 }
 .trim-title { font-size: 1rem; font-weight: 700; }
-.trim-total { font-size: 0.875rem; color: var(--text-muted); }
 
 .trimmer-container {
   position: relative;
@@ -641,11 +637,6 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* --- Generate Button (inside the Live Preview panel) --- */
-.generate-row {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-}
 .btn-generate {
   position: relative;
   display: flex;
@@ -798,7 +789,9 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   body { padding: 12px; overflow-x: hidden; }
   .trim-inputs { flex-direction: column; gap: 16px; align-items: flex-start; }
   .input-group-row { flex-wrap: wrap; }
-  .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+  .header { gap: 12px; align-items: center; }
+  #reset-btn { padding: 8px 10px; }
+  .reset-text { display: none; }
 
   /* Compact, always-expanded layout (no collapsible panels on mobile) with
      smaller controls so everything fits without scrolling gymnastics. */
@@ -808,7 +801,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   .app-container { gap: 14px; }
   .avatar-theme-section { gap: 16px; }
   .avatar-preview { width: 64px; height: 64px; }
-  .avatar-edit-badge { width: 20px; height: 20px; }
+  .avatar-edit-badge { width: 20px; height: 20px; bottom: -4px; right: -4px; }
   .avatar-edit-badge svg { width: 11px; height: 11px; }
   .avatar-label { font-size: 0.6875rem; }
 
@@ -823,14 +816,12 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   .privacy-text p { font-size: 0.75rem; line-height: 1.35; }
 
   .preview-container { padding: 12px; min-height: 150px; }
-  .preview-controls { margin-top: 10px; }
-  .play-btn { width: 42px; height: 42px; }
-  .play-btn svg { width: 18px; height: 18px; }
+  .action-row { gap: 10px; margin-top: 12px; }
+  .btn-preview, .btn-generate { flex: 1; min-width: 0; padding: 13px 16px; font-size: 0.9375rem; }
+  .btn-preview svg { width: 18px; height: 18px; }
 
   .trim-panel-header { margin-bottom: 14px; }
   .trimmer-container { height: 64px; padding: 0 12px; }
   .time-input { width: 76px; padding: 6px 10px; font-size: 0.8125rem; }
   .btn-secondary { padding: 7px 14px; font-size: 0.8125rem; }
-
-  .btn-generate { padding: 13px 28px; font-size: 0.9375rem; min-width: 180px; }
 }
