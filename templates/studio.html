@@ -128,21 +128,30 @@
                 <div class="trim-hint">Drag the handles on the waveform, or type exact times in seconds.</div>
 
                 <div class="trim-inputs">
-                    <div class="input-group-row">
-                        <div class="input-item">
-                            <label for="trim-start">Start</label>
-                            <input id="trim-start" class="time-input" type="number" min="0" max="180" value="0" step="0.01" />
-                        </div>
-                        <div class="input-item">
-                            <label for="trim-end">End</label>
-                            <input id="trim-end" class="time-input" type="number" min="0" max="180" value="10" step="0.01" />
-                        </div>
-                        <div class="duration-display">
-                            <span>Duration</span> <b id="trim-duration-selected">0:00</b>
-                        </div>
+                    <div class="duration-display">
+                        <span>Duration</span> <b id="trim-duration-selected">0:00</b>
                     </div>
 
-                    <button id="trim-reset" class="btn-secondary" type="button">Reset Trim</button>
+                    <div class="input-group-row">
+                        <div class="input-items">
+                            <div class="input-item">
+                                <label for="trim-start">Start</label>
+                                <input id="trim-start" class="time-input" type="number" min="0" max="180" value="0" step="0.01" />
+                            </div>
+                            <div class="input-item">
+                                <label for="trim-end">End</label>
+                                <input id="trim-end" class="time-input" type="number" min="0" max="180" value="10" step="0.01" />
+                            </div>
+                        </div>
+
+                        <button id="trim-reset" class="trim-reset-icon" type="button" title="Reset Trim" aria-label="Reset Trim">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                            <span class="reset-text">Reset Trim</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

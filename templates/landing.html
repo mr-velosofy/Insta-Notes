@@ -46,9 +46,9 @@
 
                 <a class="btn-primary" href="/studio">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="20" x2="12" y2="10"></line>
-                        <line x1="18" y1="20" x2="18" y2="4"></line>
-                        <line x1="6" y1="20" x2="6" y2="16"></line>
+                        <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                        <path d="M20 3v4"/>
+                        <path d="M22 5h-4"/>
                     </svg>
                     Start Creating
                 </a>
@@ -56,6 +56,8 @@
 
             <div class="hero-graphic">
                 <div class="note-card">
+                    <div class="live-preview-label"><span class="status-dot"></span> Live Preview</div>
+
                     <div class="note-frame" id="note-frame">
                         <div class="note" id="hero-note">
                             <div class="note-bubble"></div>
@@ -66,7 +68,6 @@
                     </div>
 
                     <div class="note-footer">
-                        <div><span class="status-dot"></span> Live Preview</div>
                         <a class="try-link" href="/studio">
                             Try it out in the studio
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -354,6 +355,9 @@
                 note.style.transform = 'scale(' + (frame.clientWidth / 1080) + ')';
             }
             window.addEventListener('resize', fitNote);
+            if (typeof ResizeObserver !== 'undefined') {
+                new ResizeObserver(fitNote).observe(frame);
+            }
             fitNote();
 
             // --- Animate the live preview (countdown + playhead + played bars) ---
@@ -365,7 +369,7 @@
                 timeEl.textContent = '0:04';
             } else {
                 var t0 = null;
-                function frame(ts) {
+                function animFrame(ts) {
                     if (t0 === null) t0 = ts;
                     var t = ((ts - t0) / 1000) % DUR;
                     var p = t / DUR;
@@ -374,9 +378,9 @@
                     playhead.style.left = (656 * p) + 'px';
                     var secs = Math.ceil(DUR - t);
                     timeEl.textContent = '0:' + (secs < 10 ? '0' : '') + secs;
-                    requestAnimationFrame(frame);
+                    requestAnimationFrame(animFrame);
                 }
-                requestAnimationFrame(frame);
+                requestAnimationFrame(animFrame);
             }
 
             // --- Scroll reveal: toggles every time an element enters/exits

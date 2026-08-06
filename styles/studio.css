@@ -588,13 +588,18 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 .trim-inputs {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .input-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.input-items {
   display: flex;
   align-items: center;
   gap: 24px;
@@ -622,6 +627,26 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 .duration-display { font-size: 0.875rem; font-weight: 500; display: flex; gap: 8px; }
 .duration-display span { font-weight: 400; color: var(--text-muted); }
+
+.trim-reset-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 8px 14px;
+  white-space: nowrap;
+  background-color: var(--btn-bg-light);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: background-color 0.2s, color 0.2s;
+}
+.trim-reset-icon:hover:not(:disabled) { background-color: var(--btn-bg-hover); color: var(--brand-orange); }
+.trim-reset-icon:disabled { opacity: 0.5; cursor: not-allowed; }
+.trim-reset-icon svg { width: 16px; height: 16px; }
 
 .btn-secondary {
   padding: 8px 16px;
@@ -788,7 +813,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 @media (max-width: 768px) {
   body { padding: 12px; overflow-x: hidden; }
   .trim-inputs { flex-direction: column; gap: 16px; align-items: flex-start; }
-  .input-group-row { flex-wrap: wrap; }
+  .input-group-row { flex-wrap: wrap; width: 100%; }
   .header { gap: 12px; align-items: center; }
   #reset-btn { padding: 8px 10px; }
   .reset-text { display: none; }
@@ -823,5 +848,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   .trim-panel-header { margin-bottom: 14px; }
   .trimmer-container { height: 64px; padding: 0 12px; }
   .time-input { width: 76px; padding: 6px 10px; font-size: 0.8125rem; }
-  .btn-secondary { padding: 7px 14px; font-size: 0.8125rem; }
+  .trim-inputs { gap: 14px; }
+  .input-group-row { flex-wrap: nowrap; gap: 10px; }
+  .input-items { flex: 1; min-width: 0; gap: 16px; }
+  .trim-reset-icon { flex-shrink: 0; padding: 8px 10px; }
 }

@@ -386,7 +386,10 @@ function drawTrimWave() {
     ctxBars.fillStyle = selected
       ? (preview ? preview.theme.played : cssVar("--brand-orange", "#A8E6CF"))
       : cssVar("--trim-dim", "rgba(17, 24, 39, 0.12)");
-    ctxBars.fillRect(x, y, barW, h);
+    const r = Math.min(barW / 2, h / 2);
+    ctxBars.beginPath();
+    ctxBars.roundRect(x, y, barW, h, r);
+    ctxBars.fill();
   }
 
   // Start / end handles.
@@ -540,6 +543,7 @@ async function handleAvatarFile(file) {
     await preview.setAvatar(url);
     els.avatarPreview.src = url;
     els.avatarPreview.classList.remove("hidden");
+    await projectStore.saveAvatar(file);
     setStatus("", "Avatar updated");
   } catch (err) {
     console.error(err);
@@ -551,6 +555,7 @@ function resetAvatarUI() {
   els.avatarPreview.src = AVATAR_URL;
   els.avatarPreview.classList.remove("hidden");
   if (preview) preview.setAvatar(AVATAR_URL);
+  projectStore.clearAvatar().catch(() => {});
 }
 function wireAvatar() {
   els.avatarBox.addEventListener("click", () => els.avatarInput.click());
@@ -701,6 +706,7 @@ const projectStore = (() => {
   const DB = "insta-notes-studio";
   const STORE = "project";
   const KEY = "current";
+  const KEY_AVATAR = "avatar";
   let db = null;
 
   function open() {
@@ -715,26 +721,26 @@ const projectStore = (() => {
     });
   }
 
-  async function get(store) {
+  async function get(store, key = KEY) {
     return new Promise((resolve, reject) => {
       const tx = store.transaction([STORE], "readonly");
-      const r = tx.objectStore(STORE).get(KEY);
+      const r = tx.objectStore(STORE).get(key);
       r.onsuccess = () => resolve(r.result || null);
       r.onerror = () => reject(r.error);
     });
   }
-  async function put(store, val) {
+  async function put(store, val, key = KEY) {
     return new Promise((resolve, reject) => {
       const tx = store.transaction([STORE], "readwrite");
-      tx.objectStore(STORE).put(val, KEY);
+      tx.objectStore(STORE).put(val, key);
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
     });
   }
-  async function remove(store) {
+  async function remove(store, key = KEY) {
     return new Promise((resolve, reject) => {
       const tx = store.transaction([STORE], "readwrite");
-      tx.objectStore(STORE).delete(KEY);
+      tx.objectStore(STORE).delete(key);
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
     });
@@ -758,6 +764,24 @@ const projectStore = (() => {
         const s = await open();
         await remove(s);
       } catch (e) { console.warn("Could not clear project:", e); }
+    },
+    async saveAvatar(blob) {
+      try {
+        const s = await open();
+        await put(s, blob, KEY_AVATAR);
+      } catch (e) { console.warn("Could not persist avatar:", e); }
+    },
+    async loadAvatar() {
+      try {
+        const s = await open();
+        return await get(s, KEY_AVATAR);
+      } catch (e) { console.warn("Could not restore avatar:", e); return null; }
+    },
+    async clearAvatar() {
+      try {
+        const s = await open();
+        await remove(s, KEY_AVATAR);
+      } catch (e) { console.warn("Could not clear avatar:", e); }
     },
   };
 })();
@@ -851,6 +875,16 @@ async function loadInitialAudio() {
       console.warn("Could not load default audio:", err);
     }
   }
+}
+
+/** Restore a cached custom avatar (persisted like the audio source). */
+async function restoreAvatar() {
+  const blob = await projectStore.loadAvatar();
+  if (!blob || !preview) return;
+  const url = URL.createObjectURL(blob);
+  els.avatarPreview.src = url;
+  els.avatarPreview.classList.remove("hidden");
+  await preview.setAvatar(url);
 }
 
 const LOCKABLE = [
@@ -1030,6 +1064,7 @@ async function playPreview() {
 
 async function resetProject() {
   await projectStore.clear().catch(() => {});
+  await projectStore.clearAvatar().catch(() => {});
   localStorage.removeItem(LS_THEME);
   location.reload();
 }
@@ -1137,6 +1172,7 @@ async function init() {
   }
 
   await fillScene();
+  await restoreAvatar();
   await loadInitialAudio();
 
   setStatus("", "Ready");
