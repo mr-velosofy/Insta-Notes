@@ -39,17 +39,6 @@
   padding: 0;
 }
 
-/* Smooth whole-UI recolor when the theme changes (class added by theme.js
-   around each live theme re-apply). */
-html.theme-animating,
-html.theme-animating *,
-html.theme-animating *::before,
-html.theme-animating *::after {
-  transition: background-color 0.4s ease, color 0.4s ease,
-              border-color 0.4s ease, box-shadow 0.4s ease,
-              fill 0.4s ease, stroke 0.4s ease !important;
-}
-
 body {
   font-family: "Inter", sans-serif;
   background-color: var(--bg-body);
@@ -96,6 +85,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   width: 32px;
   height: 32px;
   background-color: var(--logo-bg, #111);
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -110,23 +100,42 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   letter-spacing: -0.02em;
 }
 
-.studio-badge {
-  background-color: var(--brand-orange-light);
-  color: var(--brand-orange);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
-  margin-left: 8px;
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
+
+/* Light / dark mode toggle (top-right, left of Reset Project). Same shape and
+   proportions as the Reset Project button so they sit side by side. */
+.ui-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--card-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.ui-mode-btn:hover { background-color: var(--btn-bg-light); }
+.ui-mode-btn svg { width: 18px; height: 18px; }
+.ui-mode-btn .icon-sun { display: none; }
+html[data-ui-mode="dark"] .ui-mode-btn .icon-sun { display: block; }
+html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 
 .btn-outline {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  height: 40px;
+  padding: 0 16px;
   background: var(--card-bg);
   border: 1px solid var(--panel-border);
-  padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -393,6 +402,132 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .theme-option:hover .theme-check { transform: scale(1.15); }
 
 .theme-dropdown.locked { opacity: 0.5; pointer-events: none; }
+
+/* Custom theme editor — three color slots (background, bubble, accent). */
+.theme-custom {
+  margin-top: 8px;
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--btn-bg-light);
+}
+.theme-custom-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.theme-custom-slots {
+  display: flex;
+  gap: 12px;
+}
+.custom-slot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.custom-slot-name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.color-swatch {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid var(--panel-border);
+  background-color: var(--swatch, #888);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 45%);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+.color-swatch:hover { transform: scale(1.07); box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(0, 0, 0, 0.1); }
+.color-swatch:active { transform: scale(0.97); }
+.color-swatch:focus-visible { outline: 2px solid var(--brand-orange); outline-offset: 2px; }
+.custom-slot-hex {
+  font-size: 0.625rem;
+  color: var(--text-light);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Custom color picker popover — rendered into <body>, follows the UI theme. */
+.color-picker {
+  position: fixed;
+  z-index: 1000;
+  width: 264px;
+  padding: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  user-select: none;
+}
+.cp-sv {
+  position: relative;
+  height: 140px;
+  border-radius: 10px;
+  cursor: crosshair;
+  touch-action: none;
+  margin-bottom: 12px;
+}
+.cp-hue {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  touch-action: none;
+  margin-bottom: 12px;
+  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+}
+.cp-handle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.cp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cp-preview {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+.cp-hex {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--input-bg, var(--card-bg));
+  color: var(--text-main);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+}
+.cp-hex:focus {
+  outline: none;
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 
 /* --- 2. Audio Panel --- */
 .audio-actions {
@@ -671,15 +806,16 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   min-width: 220px;
   overflow: hidden;
   background-color: var(--btn-primary-bg, #111);
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   color: var(--btn-primary-fg, white);
   padding: 14px 40px;
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.2s, transform 0.2s, filter 0.2s;
 }
 .btn-generate > * { position: relative; z-index: 1; }
-.btn-generate:hover:not(:disabled) { background-color: var(--btn-primary-hover, #000); transform: translateY(-1px); }
+.btn-generate:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
 .btn-generate svg { width: 20px; height: 20px; }
 .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-generate.busy svg { display: none; }

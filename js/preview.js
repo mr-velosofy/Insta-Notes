@@ -85,6 +85,46 @@ export const THEMES = [
 ];
 const DEFAULT_THEME = THEMES[0];
 
+// Custom theme support: the user picks three colors (background, bubble,
+// accent) that persist to localStorage and merge into a full palette. The
+// "remaining" bar color is derived by blending the accent toward the bubble.
+export const CUSTOM_THEME_KEY = "inote-custom-theme";
+const CUSTOM_DEFAULTS = { bg: GREEN_BG, bubble: BUBBLE_COLOR, played: PLAYED };
+
+function mixHex(a, b, t) {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ar = pa >> 16, ag = (pa >> 8) & 255, ab = pa & 255;
+  const br = pb >> 16, bg2 = (pb >> 8) & 255, bb = pb & 255;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg2 - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return "#" + [r, g, bl].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+
+/** Build a full palette object from the three user-picked colors. */
+export function makeCustomTheme(bg, bubble, played) {
+  return {
+    id: "custom",
+    name: "Custom",
+    bg,
+    bubble,
+    played,
+    remaining: mixHex(played, bubble, 0.55),
+    timer: played,
+  };
+}
+
+/** Read the user's custom palette from localStorage (or a sensible default). */
+export function customTheme() {
+  let c = CUSTOM_DEFAULTS;
+  try {
+    const raw = JSON.parse(localStorage.getItem(CUSTOM_THEME_KEY) || "null");
+    if (raw && raw.bg && raw.bubble && raw.played) c = raw;
+  } catch (e) { /* corrupted value — fall back to defaults */ }
+  return makeCustomTheme(c.bg, c.bubble, c.played);
+}
+
 export class Preview {
   /**
    * @param {HTMLCanvasElement} canvas
@@ -129,8 +169,14 @@ export class Preview {
    * @param {string} id
    */
   setTheme(id) {
-    const t = THEMES.find((th) => th.id === id) || DEFAULT_THEME;
-    if (t.id !== this.theme.id) {
+    const t = id === "custom" ? customTheme() : THEMES.find((th) => th.id === id) || DEFAULT_THEME;
+    // For custom the id never changes, so compare the actual colors to detect
+    // a live color edit; for presets the id is enough.
+    const changed =
+      id === "custom"
+        ? t.bg !== this.theme.bg || t.bubble !== this.theme.bubble || t.played !== this.theme.played
+        : t.id !== this.theme.id;
+    if (changed) {
       this.theme = t;
       this._apply(this.timeline.passed);
     }

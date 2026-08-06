@@ -1,13 +1,14 @@
 /**
- * theme.js — applies the studio's saved theme to the whole UI of both pages.
+ * theme.js — applies the studio's UI mode (light/dark) to the whole UI of both
+ * pages, plus the scene colors (the note itself) from the selected note theme.
  *
- * Reads `inote-theme` from localStorage (the same key the Studio persists when
- * the user picks a theme) and derives a full set of CSS custom properties for
- * light/dark surfaces, text, borders and accent colors. The existing CSS uses
- * these variables, so both the landing page and the studio recolor live.
+ * UI mode lives in `inote-ui-mode` (localStorage) and only drives neutral
+ * light/dark surfaces, text, borders and a fixed brand accent — selecting a
+ * note theme no longer recolors the app chrome.
  *
- * Also exposes the resolved palette as `window.InoteTheme` and sets `--scene-*`
- * variables so the landing hero note uses the exact theme colors.
+ * The note theme (`inote-theme`, same key the Studio persists) still drives
+ * `--scene-*` variables so the landing hero note and the studio canvas share
+ * the exact product look. Also exposes `window.InoteTheme` for convenience.
  */
 (function () {
   "use strict";
@@ -18,6 +19,38 @@
     "light-pastel": { bg: "#f6f1fa", bubble: "#e7def2", played: "#7c5cbf", remaining: "#c9bde0", timer: "#7c5cbf" },
     "warm-sunset":  { bg: "#2a0d10", bubble: "#4a1c1e", played: "#ffb16b", remaining: "#8a4a3a", timer: "#ffb16b" }
   };
+  var CUSTOM_THEME_KEY = "inote-custom-theme";
+  var UI_MODE_KEY = "inote-ui-mode";
+
+  // Fixed brand accent — the UI never changes color with the note theme.
+  var ACCENT = "#d62976";
+
+  // Classic Instagram gradient, used for the logo and primary CTAs.
+  var INSTA_GRADIENT = "linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)";
+
+  // Neutral light/dark UI palettes.
+  var LIGHT = {
+    bg: "#fafafa",
+    surface: "#ffffff",
+    text: "#111827",
+    textMuted: "#4b5563",
+    textLight: "#9ca3af",
+    border: "#f3f4f6",
+    panelBorder: "#e5e7eb",
+    btn: "#f9fafb",
+    btnHover: "#f3f4f6",
+  };
+  var DARK = {
+    bg: "#0f1115",
+    surface: "#1a1d24",
+    text: "#f3f4f6",
+    textMuted: "rgba(255,255,255,0.68)",
+    textLight: "rgba(255,255,255,0.45)",
+    border: "rgba(255,255,255,0.08)",
+    panelBorder: "rgba(255,255,255,0.14)",
+    btn: "rgba(255,255,255,0.06)",
+    btnHover: "rgba(255,255,255,0.12)",
+  };
 
   function hexRgb(hex) {
     var h = hex.replace("#", "");
@@ -27,10 +60,6 @@
     var c = hexRgb(hex);
     return "rgba(" + c.r + "," + c.g + "," + c.b + "," + a + ")";
   }
-  function lum(hex) {
-    var c = hexRgb(hex);
-    return (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
-  }
   function mix(hex, target, t) {
     var a = hexRgb(hex), b = hexRgb(target);
     var r = Math.round(a.r + (b.r - a.r) * t);
@@ -39,85 +68,106 @@
     return "#" + [r, g, bb].map(function (v) { return v.toString(16).padStart(2, "0"); }).join("");
   }
 
-  /** Re-derive every CSS custom property from the saved theme. Exposed via
-   *  window.applyInoteTheme() with a smooth transition; the initial load calls
-   *  applyVars() directly so the page paints with the theme on first render. */
-  function applyVars() {
+  /** Build a palette for the user's custom note theme (stored in localStorage). */
+  function readCustom() {
+    var c = { bg: "#071207", bubble: "#163820", played: "#a8e6cf" };
+    try {
+      var raw = JSON.parse(localStorage.getItem(CUSTOM_THEME_KEY) || "null");
+      if (raw && raw.bg && raw.bubble && raw.played) c = raw;
+    } catch (e) { /* corrupted value — fall back to defaults */ }
+    return {
+      bg: c.bg,
+      bubble: c.bubble,
+      played: c.played,
+      remaining: mix(c.played, c.bubble, 0.55),
+      timer: c.played
+    };
+  }
+
+  /** The note scene palette from the saved note theme. */
+  function scenePalette() {
     var id = localStorage.getItem("inote-theme") || "green-forest";
-    var theme = THEME_PALETTES[id] || THEME_PALETTES["green-forest"];
-    window.InoteTheme = theme;
+    return THEME_PALETTES[id] || (id === "custom" ? readCustom() : THEME_PALETTES["green-forest"]);
+  }
 
-    var dark = lum(theme.bg) < 0.4;
-    var WHITE = "#ffffff", INK = "#111827", BLACK = "#000000";
+  /** Re-derive every CSS custom property from the UI mode + note theme. */
+  function applyVars() {
+    var mode = localStorage.getItem(UI_MODE_KEY) || "light";
+    var dark = mode === "dark";
+    document.documentElement.dataset.uiMode = mode;
+    document.documentElement.style.colorScheme = mode;
 
-    var accent = theme.played;
-    var accentContrast = lum(accent) < 0.5 ? WHITE : INK;
-    var text = dark ? "#f3f4f6" : INK;
-    var textMuted = dark ? rgba(WHITE, 0.68) : rgba(INK, 0.65);
-    var textLight = dark ? rgba(WHITE, 0.45) : rgba(INK, 0.45);
-    var bg = dark ? theme.bg : "#f8f6fb";
-    var surface = dark ? theme.bubble : WHITE;
-    var border = dark ? rgba(WHITE, 0.12) : rgba(INK, 0.1);
-    var panelBorder = dark ? rgba(WHITE, 0.16) : rgba(INK, 0.12);
-    var btnLight = dark ? rgba(WHITE, 0.06) : "#f9fafb";
-    var btnHover = dark ? rgba(WHITE, 0.12) : "#f3f4f6";
-    var accentSoft = rgba(accent, dark ? 0.16 : 0.12);
-    var accentSoft2 = rgba(accent, dark ? 0.28 : 0.22);
-    var btnPrimaryHover = mix(accent, dark ? WHITE : BLACK, 0.14);
+    var P = dark ? DARK : LIGHT;
+    var WHITE = "#ffffff";
+    var btnPrimaryBg = ACCENT;
+    var btnPrimaryHover = dark ? mix(ACCENT, "#ffffff", 0.14) : mix(ACCENT, "#000000", 0.14);
 
     var root = document.documentElement.style;
     function set(k, v) { root.setProperty(k, v); }
 
-    set("--bg-body", bg);
-    set("--text-main", text);
-    set("--text-muted", textMuted);
-    set("--text-light", textLight);
-    set("--brand-orange", accent);
-    set("--brand-orange-light", accentSoft);
-    set("--border-color", border);
-    set("--card-bg", surface);
-    set("--panel-border", panelBorder);
-    set("--btn-bg-light", btnLight);
-    set("--btn-bg-hover", btnHover);
-    set("--input-bg", surface);
+    set("--bg-body", P.bg);
+    set("--text-main", P.text);
+    set("--text-muted", P.textMuted);
+    set("--text-light", P.textLight);
+    set("--brand-orange", ACCENT);
+    set("--brand-orange-light", dark ? rgba(ACCENT, 0.16) : "#fdf2f8");
+    set("--border-color", P.border);
+    set("--card-bg", P.surface);
+    set("--panel-border", P.panelBorder);
+    set("--btn-bg-light", P.btn);
+    set("--btn-bg-hover", P.btnHover);
+    set("--input-bg", P.surface);
 
-    set("--accent-soft", accentSoft);
-    set("--accent-soft-2", accentSoft2);
-    set("--btn-primary-bg", accent);
-    set("--btn-primary-fg", accentContrast);
+    set("--insta-gradient", INSTA_GRADIENT);
+    set("--accent-soft", dark ? rgba(ACCENT, 0.16) : "#fdf2f8");
+    set("--accent-soft-2", dark ? rgba(ACCENT, 0.28) : "#fce7f3");
+    set("--btn-primary-bg", btnPrimaryBg);
+    set("--btn-primary-fg", WHITE);
     set("--btn-primary-hover", btnPrimaryHover);
-    set("--cta-bg", dark ? mix(theme.bg, BLACK, 0.35) : INK);
+    set("--cta-bg", dark ? "#1a1d24" : "#111111");
     set("--cta-text", WHITE);
-    set("--cta-glow", rgba(accent, 0.25));
-    set("--step-line", dark ? rgba(WHITE, 0.16) : "#e5e7eb");
-    set("--trim-dim", dark ? rgba(WHITE, 0.15) : rgba(INK, 0.12));
-    set("--logo-bg", accent);
-    set("--logo-fg", accentContrast);
+    set("--cta-glow", rgba(ACCENT, 0.25));
+    set("--step-line", dark ? "rgba(255,255,255,0.14)" : "#e5e7eb");
+    set("--trim-dim", dark ? "rgba(255,255,255,0.15)" : "rgba(17,24,39,0.12)");
+    set("--logo-bg", "#111111");
+    set("--logo-fg", "#ffffff");
 
-    set("--shadow-sm", dark ? "0 1px 2px rgba(0,0,0,0.4)" : "0 1px 2px 0 rgba(0,0,0,0.05)");
-    set("--shadow-md", dark ? "0 4px 12px rgba(0,0,0,0.45)" : "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)");
-    set("--shadow-lg", dark ? "0 14px 34px rgba(0,0,0,0.55)" : "0 10px 25px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04)");
+    set("--shadow-sm", dark ? "0 1px 2px rgba(0,0,0,0.5)" : "0 1px 2px 0 rgba(0,0,0,0.05)");
+    set("--shadow-md", dark ? "0 4px 14px rgba(0,0,0,0.5)" : "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)");
+    set("--shadow-lg", dark ? "0 14px 38px rgba(0,0,0,0.6)" : "0 10px 25px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04)");
 
-    set("--scene-bg", theme.bg);
-    set("--scene-bubble", theme.bubble);
-    set("--scene-played", theme.played);
-    set("--scene-remaining", theme.remaining);
-    set("--scene-timer", theme.timer);
-    set("--note-glow", "0 20px 50px -20px " + rgba(accent, 0.55));
+    // Scene colors (the note itself) come from the selected note theme.
+    var th = scenePalette();
+    window.InoteTheme = th;
+    set("--scene-bg", th.bg);
+    set("--scene-bubble", th.bubble);
+    set("--scene-played", th.played);
+    set("--scene-remaining", th.remaining);
+    set("--scene-timer", th.timer);
+    set("--note-glow", "0 20px 50px -20px " + rgba(th.played, 0.55));
   }
 
-  /** Apply the theme with a short whole-UI transition (used on live changes
-   *  from the theme dropdown). The CSS rule for `html.theme-animating *`
-   *  animates colors/backgrounds/borders/shadows for ~0.45s. */
+  /** Apply the current mode + scene colors immediately (no whole-UI cross-fade,
+   *  which caused a flicker of intermediate colors on every element). */
   window.applyInoteTheme = function () {
-    var root = document.documentElement;
-    root.classList.add("theme-animating");
     applyVars();
-    clearTimeout(window.__inoteThemeTimer);
-    window.__inoteThemeTimer = setTimeout(function () {
-      root.classList.remove("theme-animating");
-    }, 500);
   };
+
+  // Light/dark mode helpers (shared by both pages' toggle buttons).
+  window.getUiMode = function () { return localStorage.getItem(UI_MODE_KEY) || "light"; };
+  window.setUiMode = function (mode) {
+    localStorage.setItem(UI_MODE_KEY, mode);
+    window.applyInoteTheme();
+  };
+  window.toggleUiMode = function () {
+    window.setUiMode(window.getUiMode() === "dark" ? "light" : "dark");
+  };
+
+  // Auto-wire any page element with id="ui-mode-btn".
+  document.addEventListener("DOMContentLoaded", function () {
+    var btn = document.getElementById("ui-mode-btn");
+    if (btn) btn.addEventListener("click", window.toggleUiMode);
+  });
 
   applyVars();
 })();

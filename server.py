@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 
-app = FastAPI(title="Insta Notes Studio")
+app = FastAPI(title="Insta Notes")
 
 app.mount("/styles", StaticFiles(directory=BASE_DIR / "styles"), name="styles")
 app.mount("/js", StaticFiles(directory=BASE_DIR / "js"), name="js")

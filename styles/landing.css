@@ -40,17 +40,6 @@
   padding: 0;
 }
 
-/* Smooth whole-UI recolor when the theme changes (class added by theme.js
-   around each live theme re-apply). */
-html.theme-animating,
-html.theme-animating *,
-html.theme-animating *::before,
-html.theme-animating *::after {
-  transition: background-color 0.4s ease, color 0.4s ease,
-              border-color 0.4s ease, box-shadow 0.4s ease,
-              fill 0.4s ease, stroke 0.4s ease !important;
-}
-
 html { scroll-behavior: smooth; }
 
 body {
@@ -111,6 +100,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   width: 36px;
   height: 36px;
   background-color: var(--logo-bg, #111);
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -139,6 +129,33 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 
 .privacy-badge svg { width: 14px; height: 14px; opacity: 0.7; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Light / dark mode toggle (top-right, next to the privacy badge). */
+.ui-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.ui-mode-btn:hover { background-color: var(--btn-bg-light); }
+.ui-mode-btn svg { width: 18px; height: 18px; }
+.ui-mode-btn .icon-sun { display: none; }
+html[data-ui-mode="dark"] .ui-mode-btn .icon-sun { display: block; }
+html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 
 /* --- Hero Section --- */
 .hero {
@@ -170,17 +187,18 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background-color: var(--btn-primary-bg, #111);
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   color: var(--btn-primary-fg, white);
-  padding: 15px 30px;
+  padding: 14px 28px;
   border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+  font-size: 1.05rem;
+  font-weight: 700;
   box-shadow: var(--shadow-md);
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
 }
-.btn-primary:hover { background-color: var(--btn-primary-hover, #000); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
 /* Hero "Start Creating" — a soft accent glow whose opacity gently pulses.
@@ -599,11 +617,11 @@ button { cursor: pointer; font-family: inherit; border: none; }
   position: relative;
 }
 .final-cta .btn-primary {
-  background: var(--btn-primary-bg, var(--brand-orange));
+  background-color: var(--btn-primary-bg, var(--brand-orange));
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   color: var(--btn-primary-fg, #fff);
-  position: relative;
 }
-.final-cta .btn-primary:hover { background: var(--btn-primary-hover, #ea580c); }
+.final-cta .btn-primary:hover { background-color: var(--btn-primary-hover, #ea580c); filter: brightness(1.08); }
 
 /* --- Footer --- */
 .footer {
@@ -635,7 +653,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 
 @media (max-width: 600px) {
-  .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+  .header { flex-direction: row; justify-content: space-between; align-items: center; gap: 12px; }
   .header .privacy-badge { display: none; }
   .hero-title { font-size: 2.4rem; }
   .note-card { padding: 10px; }

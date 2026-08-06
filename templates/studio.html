@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insta Notes Studio - Studio</title>
+    <title>Insta Notes - Studio</title>
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,17 +23,34 @@
                         </svg>
                     </div>
                 </a>
-                <span class="logo-text">Insta Notes Studio</span>
-                <span class="studio-badge">Studio</span>
+                <span class="logo-text">Insta Notes</span>
             </div>
 
-            <button id="reset-btn" class="btn-outline" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                    <path d="M3 3v5h5"></path>
-                </svg>
-                <span class="reset-text">Reset Project</span>
-            </button>
+            <div class="header-actions">
+                <button id="ui-mode-btn" class="ui-mode-btn" type="button" title="Toggle light / dark mode" aria-label="Toggle light / dark mode">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <button id="reset-btn" class="btn-outline" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    <span class="reset-text">Reset Project</span>
+                </button>
+            </div>
         </header>
 
         <div class="workspace">
@@ -58,6 +75,26 @@
                     <div class="theme-selector">
                         <span class="theme-label">Theme</span>
                         <div id="theme-picker" class="theme-picker"></div>
+                        <div id="theme-custom" class="theme-custom hidden">
+                            <span class="theme-custom-label">Custom colors</span>
+                            <div class="theme-custom-slots">
+                                <div class="custom-slot">
+                                    <span class="custom-slot-name">Background</span>
+                                    <button type="button" class="color-swatch" data-slot="bg" style="--swatch:#071207" title="Pick background color" aria-label="Pick background color"></button>
+                                    <span class="custom-slot-hex">#071207</span>
+                                </div>
+                                <div class="custom-slot">
+                                    <span class="custom-slot-name">Bubble</span>
+                                    <button type="button" class="color-swatch" data-slot="bubble" style="--swatch:#163820" title="Pick bubble color" aria-label="Pick bubble color"></button>
+                                    <span class="custom-slot-hex">#163820</span>
+                                </div>
+                                <div class="custom-slot">
+                                    <span class="custom-slot-name">Accent</span>
+                                    <button type="button" class="color-swatch" data-slot="played" style="--swatch:#a8e6cf" title="Pick accent color" aria-label="Pick accent color"></button>
+                                    <span class="custom-slot-hex">#a8e6cf</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>

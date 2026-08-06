@@ -12,8 +12,9 @@
  * and a debug metrics panel gated behind ?debug=1.
  */
 
-import { Preview, THEMES, WAVE_BARS, AVATAR_URL } from "./preview.js";
+import { Preview, THEMES, WAVE_BARS, AVATAR_URL, customTheme, CUSTOM_THEME_KEY } from "./preview.js";
 import { Recorder } from "./recorder.js";
+import { createColorPicker } from "./colorpicker.js";
 import { DURATION, WIDTH } from "./timeline.js";
 
 const MAX_DURATION = 180; // 3:00 cap (seconds)
@@ -30,6 +31,7 @@ const els = {
   themeCurrent: null,
   themeName: null,
   themeMenu: null,
+  themeCustom: document.getElementById("theme-custom"),
   uploadBtn: document.getElementById("upload-btn"),
   recordBtn: document.getElementById("record-btn"),
   audioInput: document.getElementById("audio-input"),
@@ -462,11 +464,12 @@ function themePreviewHtml(t) {
 
 function buildThemePicker() {
   const saved = localStorage.getItem(LS_THEME) || THEMES[0].id;
+  const initial = saved === "custom" ? customTheme() : THEMES.find((t) => t.id === saved) || THEMES[0];
   els.themePicker.classList.add("theme-dropdown");
   els.themePicker.innerHTML = `
     <button type="button" class="theme-current" aria-haspopup="listbox">
-      <span class="th-preview" id="theme-current-swatches">${themePreviewHtml(THEMES.find((t) => t.id === saved) || THEMES[0])}</span>
-      <span class="theme-name" id="theme-current-name">${(THEMES.find((t) => t.id === saved) || THEMES[0]).name}</span>
+      <span class="th-preview" id="theme-current-swatches">${themePreviewHtml(initial)}</span>
+      <span class="theme-name" id="theme-current-name">${initial.name}</span>
       <span class="theme-caret">▾</span>
     </button>
     <div class="theme-menu hidden" id="theme-menu"></div>`;
@@ -476,20 +479,70 @@ function buildThemePicker() {
 
   const currentSwatches = els.themePicker.querySelector("#theme-current-swatches");
 
+  // Custom-theme slot state (bg / bubble / played) + the swatch buttons.
+  const slotKeys = ["bg", "bubble", "played"];
+  const customSwatchButtons = {};
+  els.themeCustom.querySelectorAll(".color-swatch").forEach((btn) => {
+    customSwatchButtons[btn.dataset.slot] = btn;
+  });
+  let activeSlot = "bg";
+  let currentCustom = { bg: customTheme().bg, bubble: customTheme().bubble, played: customTheme().played };
+
+  function renderSwatches() {
+    slotKeys.forEach((k) => {
+      const btn = customSwatchButtons[k];
+      if (!btn) return;
+      btn.style.setProperty("--swatch", currentCustom[k]);
+      const hexEl = btn.closest(".custom-slot").querySelector(".custom-slot-hex");
+      if (hexEl) hexEl.textContent = currentCustom[k].toUpperCase();
+    });
+  }
+
+  function updateCustomSwatches() {
+    const t = customTheme();
+    currentSwatches.innerHTML = themePreviewHtml(t);
+    els.themeName.textContent = t.name;
+    customOption.querySelector(".th-preview").innerHTML = themePreviewHtml(t);
+  }
+
   function select(id) {
-    const t = THEMES.find((x) => x.id === id) || THEMES[0];
+    const t = id === "custom" ? customTheme() : THEMES.find((x) => x.id === id) || THEMES[0];
     localStorage.setItem(LS_THEME, t.id);
     els.themeName.textContent = t.name;
     currentSwatches.innerHTML = themePreviewHtml(t);
+    if (id === "custom") {
+      els.themeCustom.classList.remove("hidden");
+      currentCustom = { bg: t.bg, bubble: t.bubble, played: t.played };
+      renderSwatches();
+    } else {
+      els.themeCustom.classList.add("hidden");
+    }
     if (preview) {
       preview.setTheme(t.id);
       drawTrimWave();
     }
-    // Re-apply the theme to the whole Studio UI (see /js/theme.js).
+    // Refresh the scene CSS vars (--scene-*). UI colors are mode-only, so this
+    // never recolors the chrome.
     if (typeof window.applyInoteTheme === "function") window.applyInoteTheme();
     [...els.themeMenu.querySelectorAll(".theme-option")].forEach((o) => {
       const check = o.querySelector(".theme-check");
       check.textContent = o.dataset.id === t.id ? "✓" : "";
+    });
+  }
+
+  // Live-apply a color-slot change: persist + re-paint the scene.
+  function applyCustomColors() {
+    localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(currentCustom));
+    localStorage.setItem(LS_THEME, "custom");
+    if (preview) {
+      preview.setTheme("custom");
+      drawTrimWave();
+    }
+    if (typeof window.applyInoteTheme === "function") window.applyInoteTheme();
+    updateCustomSwatches();
+    [...els.themeMenu.querySelectorAll(".theme-option")].forEach((o) => {
+      const check = o.querySelector(".theme-check");
+      check.textContent = o.dataset.id === "custom" ? "✓" : "";
     });
   }
 
@@ -509,6 +562,48 @@ function buildThemePicker() {
     });
     els.themeMenu.appendChild(opt);
   });
+
+  // "Custom" option: user picks their own three colors (see the slot editor).
+  const customOption = document.createElement("button");
+  customOption.type = "button";
+  customOption.className = "theme-option";
+  customOption.dataset.id = "custom";
+  customOption.setAttribute("role", "option");
+  customOption.innerHTML = `
+    <span class="th-preview">${themePreviewHtml(customTheme())}</span>
+    <span class="theme-name">Custom</span>
+    <span class="theme-check">${saved === "custom" ? "✓" : ""}</span>`;
+  customOption.addEventListener("click", () => {
+    select("custom");
+    closeThemeMenu();
+  });
+  els.themeMenu.appendChild(customOption);
+
+  // Custom color picker — clicking a swatch opens it; changes apply live.
+  const picker = createColorPicker({
+    onChange: (hex) => {
+      currentCustom[activeSlot] = hex;
+      renderSwatches();
+      applyCustomColors();
+    },
+    onCommit: () => {},
+  });
+
+  slotKeys.forEach((k) => {
+    customSwatchButtons[k].addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      activeSlot = k;
+      picker.open(customSwatchButtons[k], currentCustom[k]);
+    });
+  });
+
+  if (saved === "custom") {
+    const t = customTheme();
+    els.themeCustom.classList.remove("hidden");
+    currentCustom = { bg: t.bg, bubble: t.bubble, played: t.played };
+    renderSwatches();
+  }
 
   function closeThemeMenu() {
     els.themeMenu.classList.add("hidden");
@@ -850,9 +945,13 @@ async function convertToMp4(webmBlob) {
    ------------------------------------------------------------------ */
 async function fillScene() {
   const savedTheme = localStorage.getItem(LS_THEME) || THEMES[0].id;
+  const theme =
+    savedTheme === "custom"
+      ? customTheme()
+      : THEMES.find((t) => t.id === savedTheme) || THEMES[0];
   preview = new Preview(els.scene, { audio, metrics }, {
     duration: currentDuration,
-    theme: THEMES.find((t) => t.id === savedTheme) || THEMES[0],
+    theme,
     onDone: () => {
       setPlayLabel(false);
       // Don't release the audio/trim controls mid-generate: the timeline
