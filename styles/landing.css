@@ -244,7 +244,9 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 
 /* The stage matches the real export canvas: 3:1 (1080x360). The inner
    .note is laid out at native 1080x360 px and scaled by JS to fit, so the
-   bars/avatar/timer keep their exact export geometry at any size. */
+   bars/avatar/timer keep their exact export geometry at any size.
+   The hero note always uses a FIXED Instagram-gradient palette (the brand
+   gradient's colors), never the saved generation theme's colors. */
 .note-frame {
   position: relative;
   width: 100%;
@@ -253,8 +255,8 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   aspect-ratio: 3 / 1;
   border-radius: 18px;
   overflow: hidden;
-  background: var(--scene-bg, var(--note-bg, #071207));
-  box-shadow: var(--note-glow, 0 20px 50px -20px rgba(0, 0, 0, 0.55));
+  background: #591c71;
+  box-shadow: 0 20px 50px -20px rgba(245, 117, 254, 0.5);
 }
 
 .note {
@@ -273,7 +275,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   width: 960px;
   height: 210px;
   border-radius: 44px;
-  background: var(--scene-bubble, var(--note-bubble, #163820));
+  background: #c820af;
 }
 
 .note-avatar {
@@ -300,10 +302,10 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   position: absolute;
   width: 8.2px;
   border-radius: 4px;
-  background: var(--scene-remaining, var(--note-remaining, #2d5a3d));
+  background: #ff78dd;
   transition: background-color 0.15s ease;
 }
-.note-bar.played { background: var(--scene-played, var(--note-played, #a8e6cf)); }
+.note-bar.played { background: #feda75; }
 
 .note-playhead {
   position: absolute;
@@ -312,8 +314,8 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   width: 8px;
   height: 142px;
   border-radius: 4px;
-  background: var(--scene-played, var(--note-played, #a8e6cf));
-  box-shadow: 0 0 14px var(--scene-played, var(--note-played, #a8e6cf));
+  background: #feda75;
+  box-shadow: 0 0 14px rgba(254, 218, 117, 0.85);
   pointer-events: none;
 }
 
@@ -328,7 +330,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
-  color: var(--scene-timer, var(--note-timer, #a8e6cf));
+  color: #feda75;
 }
 
 /* Small "Live Preview" caption above the note stage. */
