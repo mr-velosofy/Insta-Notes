@@ -100,6 +100,15 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   letter-spacing: -0.02em;
 }
 
+/* "mr.velosofy" — pink italic (matches the brand accent) with a soft glow. */
+.grad-text {
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.125em;
+  color: #d62976;
+  filter: drop-shadow(0 0 12px rgba(214, 41, 118, 0.5));
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -403,15 +412,41 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 
 .theme-dropdown.locked { opacity: 0.5; pointer-events: none; }
 
-/* Custom theme editor — three color slots (background, bubble, accent). */
+/* Custom theme editor — three color slots (background, bubble, accent).
+   Collapses via grid-template-rows so the avatar panel height animates
+   smoothly instead of snapping when the editor appears/disappears. */
 .theme-custom {
-  margin-top: 10px;
-  padding: 12px 14px;
+  display: grid;
+  grid-template-rows: 0fr;
+  --tc-pad-y: 12px;
+  --tc-pad-x: 14px;
+  margin-top: 0;
+  padding: 0 var(--tc-pad-x);
   border: 1px solid var(--panel-border);
+  border-width: 0;
   border-radius: 12px;
   background: var(--btn-bg-light);
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 0.35s ease, opacity 0.35s ease,
+              margin-top 0.35s ease, padding-top 0.35s ease, padding-bottom 0.35s ease,
+              border-width 0.35s ease, visibility 0s linear 0.35s;
 }
-.theme-custom-slots {
+.theme-custom.open {
+  grid-template-rows: 1fr;
+  margin-top: 10px;
+  padding-top: var(--tc-pad-y);
+  padding-bottom: var(--tc-pad-y);
+  border-width: 1px;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows 0.35s ease, opacity 0.35s ease,
+              margin-top 0.35s ease, padding-top 0.35s ease, padding-bottom 0.35s ease,
+              border-width 0.35s ease, visibility 0s;
+}
+.theme-custom > .theme-custom-slots {
+  overflow: hidden;
+  min-height: 0;
   display: flex;
   gap: 12px;
 }
@@ -633,6 +668,25 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .privacy-icon svg { width: 24px; height: 24px; }
 .privacy-text h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 4px; }
 .privacy-text p { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.4; }
+
+/* --- Footer --- */
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 0 24px;
+  font-size: 0.875rem;
+  color: var(--text-light);
+  text-align: center;
+}
+.footer .heart-svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  display: inline-block;
+}
 
 /* --- Live Preview Panel --- */
 .preview-container {
@@ -858,6 +912,55 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   color: var(--text-muted);
 }
 
+/* Warning shown while generating/converting — red, readable in light & dark.
+   Collapses via a grid-template-rows 0fr->1fr transition so the panel height
+   animates smoothly instead of snapping when it appears/disappears. */
+.busy-warning {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 0.35s ease, opacity 0.35s ease, margin-top 0.35s ease, visibility 0s linear 0.35s;
+}
+.busy-warning.busy-warning-visible {
+  grid-template-rows: 1fr;
+  margin-top: 12px;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows 0.35s ease, opacity 0.35s ease, margin-top 0.35s ease, visibility 0s;
+}
+.busy-warning-track {
+  overflow: hidden;
+  min-height: 0;
+}
+.busy-warning-inner {
+  overflow: hidden;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  text-align: center;
+}
+.busy-warning-inner svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .busy-warning { transition: none; }
+}
+
 #status-dot {
   width: 8px;
   height: 8px;
@@ -983,10 +1086,13 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   .trim-reset-icon { flex-shrink: 0; padding: 8px 10px; }
 
   /* Custom theme editor — compact so the three slots fit beside the avatar. */
-  .theme-custom { padding: 10px 12px; }
-  .theme-custom-slots { gap: 8px; }
+  .theme-custom { --tc-pad-y: 10px; --tc-pad-x: 12px; }
+  .theme-custom > .theme-custom-slots { gap: 8px; }
   .custom-slot { gap: 6px; }
   .color-swatch { width: 38px; height: 38px; border-radius: 12px; }
   .custom-slot-name { font-size: 0.625rem; }
   .custom-slot-hex { font-size: 0.5625rem; }
+
+  /* Footer — side padding on mobile. */
+  .footer { padding: 8px 16px 24px; }
 }

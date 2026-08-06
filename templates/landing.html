@@ -23,6 +23,7 @@
                     </svg>
                 </div>
                 <span class="logo-text">Insta Notes</span>
+                <span class="logo-by">by <span class="grad-text">mr.velosofy</span></span>
             </div>
 
             <div class="header-actions">
@@ -192,7 +193,6 @@
             </div>
 
             <div class="steps-container">
-                <div class="steps-line"></div>
 
                 <div class="step reveal">
                     <div class="step-icon">
@@ -325,7 +325,20 @@
         </section>
 
         <footer class="footer">
-            <div>Made with <span class="heart">❤︎</span> for creators who care about privacy.</div>
+            <div class="footer-text">Made with
+                <svg class="heart-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="heart-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#feda75"/>
+                            <stop offset="0.25" stop-color="#fa7e1e"/>
+                            <stop offset="0.5" stop-color="#d62976"/>
+                            <stop offset="0.75" stop-color="#962fbf"/>
+                            <stop offset="1" stop-color="#4f5bd5"/>
+                        </linearGradient>
+                    </defs>
+                    <path fill="url(#heart-grad)" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                by <span class="grad-text">mr.velosofy</span> for creators who care about privacy.</div>
             <div class="footer-links">
                 <a href="/studio">Studio</a>
                 <a href="#features">Features</a>
@@ -403,29 +416,45 @@
                 requestAnimationFrame(animFrame);
             }
 
-            // --- Scroll reveal: toggles every time an element enters/exits
-            // view, so the animation plays again on each scroll pass. ---
-            var items = document.querySelectorAll('.reveal');
-            if (reduceMotion || !('IntersectionObserver' in window)) {
-                items.forEach(function (el) { el.classList.add('visible'); });
-                return;
-            }
-            var io = new IntersectionObserver(function (entries) {
-                entries.forEach(function (entry) {
-                    var delay = entry.target.getAttribute('data-reveal-delay') || 0;
-                    entry.target.style.transitionDelay = delay + 'ms';
-                    entry.target.classList.toggle('visible', entry.isIntersecting);
-                });
-            }, { threshold: 0.15 });
+            // --- Scroll reveal: scroll-linked & reversible. opacity + translate
+            // track each element's position on every scroll step, easing in
+            // BOTH directions (scroll down fades in, scroll back up fades out)
+            // for buttery-smooth motion and fade. ---
+            var items = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
             items.forEach(function (el, idx) {
                 var parent = el.parentElement;
-                if (parent && parent.classList.contains('features-grid')) {
-                    el.setAttribute('data-reveal-delay', (idx % 3) * 80);
-                } else if (parent && parent.classList.contains('faq-grid')) {
-                    el.setAttribute('data-reveal-delay', (idx % 2) * 100);
-                }
-                io.observe(el);
+                var delay = 0;
+                if (parent && parent.classList.contains('features-grid')) delay = (idx % 3) * 80;
+                else if (parent && parent.classList.contains('faq-grid')) delay = (idx % 2) * 100;
+                el.setAttribute('data-reveal-delay', String(delay));
             });
+            var revealRaf = null;
+            function updateReveals() {
+                revealRaf = null;
+                var vh = window.innerHeight;
+                for (var i = 0; i < items.length; i++) {
+                    var el = items[i];
+                    var rect = el.getBoundingClientRect();
+                    var delayPx = (parseInt(el.getAttribute('data-reveal-delay') || '0', 10) || 0) * 0.35;
+                    var start = vh * 0.94 + delayPx;
+                    var end = vh * 0.55 + delayPx;
+                    var p = (start - rect.top) / (start - end);
+                    if (p < 0) p = 0; else if (p > 1) p = 1;
+                    var eased = 1 - Math.pow(1 - p, 3);
+                    el.style.opacity = String(eased);
+                    el.style.transform = 'translateY(' + Math.round(28 * (1 - eased) * 10) / 10 + 'px)';
+                }
+            }
+            function onScrollTick() {
+                if (revealRaf == null) revealRaf = requestAnimationFrame(updateReveals);
+            }
+            if (reduceMotion) {
+                items.forEach(function (el) { el.classList.add('visible'); });
+            } else {
+                window.addEventListener('scroll', onScrollTick, { passive: true });
+                window.addEventListener('resize', onScrollTick);
+                updateReveals();
+            }
         })();
     </script>
 </body>

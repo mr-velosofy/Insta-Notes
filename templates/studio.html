@@ -75,7 +75,7 @@
                     <div class="theme-selector">
                         <span class="theme-label">Theme</span>
                         <div id="theme-picker" class="theme-picker"></div>
-                        <div id="theme-custom" class="theme-custom hidden">
+                        <div id="theme-custom" class="theme-custom">
                             <div class="theme-custom-slots">
                                 <div class="custom-slot">
                                     <span class="custom-slot-name">Background</span>
@@ -215,6 +215,19 @@
                     </button>
                 </div>
 
+                <div id="busy-warning" class="busy-warning" role="status">
+                    <div class="busy-warning-track">
+                        <div class="busy-warning-inner">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            <span>Don't switch tabs or close the browser while generating or converting.</span>
+                        </div>
+                    </div>
+                </div>
+
                 <label class="status-line">
                     <span id="status-dot"></span>
                     <span id="status-text">Idle</span>
@@ -230,11 +243,29 @@
                 </div>
                 <div class="privacy-text">
                     <h4>Everything Happens Locally</h4>
-                    <p>Your audio never leaves your browser.<br>Close the tab and everything is gone.</p>
+                    <p>Your audio never leaves your browser. Close the tab and everything is gone.</p>
                 </div>
             </div>
 
         </div>
+
+        <footer class="footer">
+            <div class="footer-text">Made with
+                <svg class="heart-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="heart-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#feda75"/>
+                            <stop offset="0.25" stop-color="#fa7e1e"/>
+                            <stop offset="0.5" stop-color="#d62976"/>
+                            <stop offset="0.75" stop-color="#962fbf"/>
+                            <stop offset="1" stop-color="#4f5bd5"/>
+                        </linearGradient>
+                    </defs>
+                    <path fill="url(#heart-grad)" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                by <span class="grad-text">mr.velosofy</span> for creators who care about privacy.
+            </div>
+        </footer>
     </div>
 
     <!-- Debug metrics (hidden unless ?debug=1) -->

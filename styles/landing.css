@@ -63,12 +63,12 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 #features, #faq { scroll-margin-top: 32px; }
 
-/* --- Scroll reveal (re-triggers on every scroll pass, via IntersectionObserver) --- */
+/* --- Scroll reveal (scroll-linked: opacity + translate track position on
+   every scroll step, easing in BOTH directions for smooth motion & fade) --- */
 .reveal {
   opacity: 0;
   transform: translateY(28px);
-  transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
 }
 .reveal.visible {
   opacity: 1;
@@ -103,7 +103,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 .logo-group {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 12px;
 }
 
@@ -117,12 +117,30 @@ button { cursor: pointer; font-family: inherit; border: none; }
   align-items: center;
   justify-content: center;
   color: var(--logo-fg, white);
+  align-self: center;
 }
 
 .logo-text {
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.02em;
+}
+
+.logo-by {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* "mr.velosofy" — pink italic (matches the brand accent) with a soft glow. */
+.grad-text {
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.125em;
+  color: #d62976;
+  filter: drop-shadow(0 0 12px rgba(214, 41, 118, 0.5));
 }
 
 .privacy-badge {
@@ -474,16 +492,6 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   margin: 0 auto;
 }
 
-.steps-line {
-  position: absolute;
-  top: 40px;
-  left: 15%;
-  right: 15%;
-  height: 1px;
-  border-top: 2px dashed var(--step-line, #e5e7eb);
-  z-index: 1;
-}
-
 .step {
   flex: 1;
   display: flex;
@@ -647,7 +655,12 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   font-size: 0.875rem;
   color: var(--text-light);
 }
-.footer .heart { color: var(--brand-orange); }
+.footer .heart-svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  display: inline-block;
+}
 .footer-links { display: flex; gap: 24px; }
 .footer-links a { transition: color 0.2s; }
 .footer-links a:hover { color: var(--text-main); }
@@ -660,17 +673,34 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   .features-grid { grid-template-columns: 1fr; }
   .faq-grid { grid-template-columns: 1fr; }
   .steps-container { flex-direction: column; gap: 48px; }
-  .steps-line { display: none; }
   .privacy-priority { flex-direction: column; text-align: center; padding: 32px 24px; }
   .tech-stack { justify-content: center; }
 }
 
+@media (max-width: 768px) {
+  .header .privacy-badge { display: none; }
+}
+
 @media (max-width: 600px) {
   .header-inner { flex-direction: row; justify-content: space-between; align-items: center; gap: 12px; }
-  .header .privacy-badge { display: none; }
+
+  /* Keep "Insta Notes by mr.velosofy" on one line — tighten gaps and scale
+     the byline down so the header stays compact on narrow screens. */
+  .header-inner { padding: 12px; }
+  .logo-group { gap: 4px; }
+  .logo-by { font-size: 0.75rem; }
+  .grad-text { font-size: 1em; }
+  .logo-text { font-size: 1.125rem; }
+
   .hero-title { font-size: 2.4rem; }
   .note-card { padding: 10px; }
   .final-cta { padding: 48px 24px; }
   .final-cta h2 { font-size: 1.9rem; }
   .footer { flex-direction: column; text-align: center; }
+
+  /* Feature cards — icon and text sit on the same line. */
+  .feature-card { display: flex; align-items: center; gap: 16px; padding: 20px 18px; text-align: left; }
+  .feature-icon { flex-shrink: 0; margin-bottom: 0; }
+  .feature-text { flex: 1; min-width: 0; }
+  .feature-text h3 { font-size: 1rem; }
 }

@@ -53,6 +53,7 @@ const els = {
   resetBtn: document.getElementById("reset-btn"),
   statusDot: document.getElementById("status-dot"),
   statusText: document.getElementById("status-text"),
+  busyWarning: document.getElementById("busy-warning"),
   stepAudio: document.getElementById("step-audio"),
   stepTrim: document.getElementById("step-trim"),
   metrics: document.getElementById("metrics"),
@@ -114,6 +115,19 @@ function setProgress(pct) {
 /** Set the text shown inside the generate button. */
 function setGenerateLabel(text) {
   els.generateLabel.textContent = text;
+}
+
+/** Show/hide the red "don't switch tabs / close the browser" warning. */
+function setBusyWarning(show) {
+  if (els.busyWarning) els.busyWarning.classList.toggle("busy-warning-visible", show);
+}
+
+/** A change to the scene (trim / theme / avatar) invalidates the last MP4. */
+function invalidateGenerated() {
+  lastMp4 = null;
+  els.generateBtn.classList.remove("ready");
+  if (!busy) setGenerateLabel("Generate");
+  setProgress(null);
 }
 
 const metrics = {
@@ -312,6 +326,7 @@ function clampTrim() {
 function applyTrim() {
   if (!sourceBuffer) return;
   clampTrim();
+  invalidateGenerated();
 
   const sliced = sliceBuffer(sourceBuffer, trim.start, trim.end);
   currentDuration = sliced.duration;
@@ -512,15 +527,16 @@ function buildThemePicker() {
 
   function select(id) {
     const t = id === "custom" ? customTheme() : THEMES.find((x) => x.id === id) || THEMES[0];
+    invalidateGenerated();
     localStorage.setItem(LS_THEME, t.id);
     els.themeName.textContent = t.name;
     currentSwatches.innerHTML = themePreviewHtml(t);
     if (id === "custom") {
-      els.themeCustom.classList.remove("hidden");
+      els.themeCustom.classList.add("open");
       currentCustom = { bg: t.bg, bubble: t.bubble, played: t.played };
       renderSwatches();
     } else {
-      els.themeCustom.classList.add("hidden");
+      els.themeCustom.classList.remove("open");
     }
     if (preview) {
       preview.setTheme(t.id);
@@ -537,6 +553,7 @@ function buildThemePicker() {
 
   // Live-apply a color-slot change: persist + re-paint the scene.
   function applyCustomColors() {
+    invalidateGenerated();
     localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(currentCustom));
     localStorage.setItem(LS_THEME, "custom");
     if (preview) {
@@ -605,7 +622,7 @@ function buildThemePicker() {
 
   if (saved === "custom") {
     const t = customTheme();
-    els.themeCustom.classList.remove("hidden");
+    els.themeCustom.classList.add("open");
     currentCustom = { bg: t.bg, bubble: t.bubble, played: t.played };
     renderSwatches();
   }
@@ -641,6 +658,7 @@ async function handleAvatarFile(file) {
   try {
     const url = URL.createObjectURL(file);
     await preview.setAvatar(url);
+    invalidateGenerated();
     els.avatarPreview.src = url;
     els.avatarPreview.classList.remove("hidden");
     await projectStore.saveAvatar(file);
@@ -654,6 +672,7 @@ async function handleAvatarFile(file) {
 function resetAvatarUI() {
   els.avatarPreview.src = AVATAR_URL;
   els.avatarPreview.classList.remove("hidden");
+  invalidateGenerated();
   if (preview) preview.setAvatar(AVATAR_URL);
   projectStore.clearAvatar().catch(() => {});
 }
@@ -1040,6 +1059,7 @@ async function runGenerate() {
   els.generateBtn.disabled = true;
   els.playBtn.disabled = true;
   els.generateBtn.classList.remove("ready");
+  setBusyWarning(true);
   // A new generate invalidates any previously produced MP4.
   lastMp4 = null;
   setGenerateLabel("Preparing…");
@@ -1113,6 +1133,7 @@ async function runGenerate() {
     setStatus("", `Error: ${err.message}`);
   } finally {
     busy = false;
+    setBusyWarning(false);
     setProgress(null);
     setControlsLocked(false);
     els.generateBtn.disabled = false;
