@@ -102,6 +102,11 @@ function mixHex(a, b, t) {
   return "#" + [r, g, bl].map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
+function rgba(hex, a) {
+  const v = parseInt(hex.slice(1), 16);
+  return `rgba(${v >> 16},${(v >> 8) & 255},${v & 255},${a})`;
+}
+
 /** Build a full palette object from the three user-picked colors. */
 export function makeCustomTheme(bg, bubble, played) {
   return {
@@ -395,7 +400,10 @@ export class Preview {
     ctx.strokeStyle = this.theme.played;
     ctx.lineWidth = PLAYHEAD_W;
     ctx.lineCap = "round";
+    ctx.shadowColor = rgba(this.theme.played, 0.45);
+    ctx.shadowBlur = 8;
     ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
   _drawTime(text, rightX, cy) {
