@@ -46,7 +46,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  padding: 24px;
+  padding: 0 24px 24px;
 }
 
 a { text-decoration: none; color: inherit; }
@@ -56,21 +56,34 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 .app-container {
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 24px auto 0;
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* --- Header --- */
+/* --- Header (matches landing page: full-width, sticky, glass) --- */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: 0 -24px;
+  background: color-mix(in srgb, var(--bg-body) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03);
+}
+
+.header-inner {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--card-bg);
-  padding: 16px 24px;
-  border-radius: 16px;
-  box-shadow: var(--shadow-sm);
+  gap: 16px;
+  padding: 16px 32px;
 }
 
 .logo-group {
@@ -82,8 +95,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .logo-link { display: flex; }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background-color: var(--logo-bg, #111);
   background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   border-radius: 50%;
@@ -92,11 +105,11 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   justify-content: center;
   color: var(--logo-fg, var(--brand-orange)); /* Waveform inside the circle */
 }
-.logo-icon svg { width: 16px; height: 16px; }
+.logo-icon svg { width: 20px; height: 20px; }
 
 .logo-text {
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   letter-spacing: -0.02em;
 }
 
@@ -104,7 +117,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .grad-text {
   font-style: italic;
   font-weight: 600;
-  font-size: 1.125em;
+  font-size: 1em;
   color: #d62976;
   filter: drop-shadow(0 0 12px rgba(214, 41, 118, 0.5));
 }
@@ -203,6 +216,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   background: var(--card-bg);
   border-radius: 16px;
   padding: 24px;
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   min-width: 0;
   max-width: 100%;
@@ -663,6 +677,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  border: 1px solid var(--border-color);
 }
 .privacy-icon { color: var(--text-main); flex-shrink: 0; }
 .privacy-icon svg { width: 24px; height: 24px; }
@@ -1043,10 +1058,12 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   .privacy-notice { grid-column: 1; grid-row: 5; }
 }
 @media (max-width: 768px) {
-  body { padding: 12px; overflow-x: hidden; }
+  body { padding: 0 12px 12px; overflow-x: hidden; }
+  .app-container { margin-top: 16px; }
   .trim-inputs { flex-direction: column; gap: 16px; align-items: flex-start; }
   .input-group-row { flex-wrap: wrap; width: 100%; }
-  .header { gap: 12px; align-items: center; }
+  .header { margin: 0 -12px; }
+  .header-inner { gap: 12px; padding: 12px; }
   #reset-btn { padding: 8px 10px; }
   .reset-text { display: none; }
 

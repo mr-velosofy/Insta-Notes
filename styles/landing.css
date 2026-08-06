@@ -98,12 +98,13 @@ button { cursor: pointer; font-family: inherit; border: none; }
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 16px 32px;
 }
 
 .logo-group {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
 }
 
@@ -118,6 +119,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   justify-content: center;
   color: var(--logo-fg, white);
   align-self: center;
+  margin-right: 4px;
 }
 
 .logo-text {
@@ -132,13 +134,14 @@ button { cursor: pointer; font-family: inherit; border: none; }
   color: var(--text-main);
   letter-spacing: 0.02em;
   white-space: nowrap;
+  transform: translateY(2px);
 }
 
 /* "mr.velosofy" — pink italic (matches the brand accent) with a soft glow. */
 .grad-text {
   font-style: italic;
   font-weight: 600;
-  font-size: 1.125em;
+  font-size: 1em;
   color: #d62976;
   filter: drop-shadow(0 0 12px rgba(214, 41, 118, 0.5));
 }
@@ -257,6 +260,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   background: var(--card-bg);
   border-radius: 26px;
   padding: 14px;
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-lg);
 }
 
@@ -690,7 +694,6 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   .logo-group { gap: 4px; }
   .logo-by { font-size: 0.75rem; }
   .grad-text { font-size: 1em; }
-  .logo-text { font-size: 1.125rem; }
 
   .hero-title { font-size: 2.4rem; }
   .note-card { padding: 10px; }
@@ -703,4 +706,11 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   .feature-icon { flex-shrink: 0; margin-bottom: 0; }
   .feature-text { flex: 1; min-width: 0; }
   .feature-text h3 { font-size: 1rem; }
+}
+
+/* Tiniest phones (320px) — tighten header spacing so the byline stays on one line. */
+@media (max-width: 340px) {
+  .header-inner { padding: 10px 8px; gap: 8px; }
+  .logo-group { gap: 2px; }
+  .logo-by { font-size: 0.6875rem; }
 }
