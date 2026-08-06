@@ -353,6 +353,7 @@ function updateTrimUI() {
 
 /* --- trim waveform + drag handles (pointer events: mouse + touch) --- */
 const TRIM_BARS = 64;
+const INSTA_GRADIENT_STOPS = ["#feda75", "#fa7e1e", "#d62976", "#962fbf", "#4f5bd5"];
 
 function drawTrimWave() {
   const c = els.trimWave;
@@ -378,6 +379,10 @@ function drawTrimWave() {
   const step = innerW / n;
   const barW = Math.max(1, step * 0.5);
   const ctxBars = ctx;
+  const selGrad = ctx.createLinearGradient(padL, 0, padL + innerW, 0);
+  INSTA_GRADIENT_STOPS.forEach((c, idx) => {
+    selGrad.addColorStop(idx / (INSTA_GRADIENT_STOPS.length - 1), c);
+  });
   for (let i = 0; i < n; i++) {
     const frac = (i + 0.5) / n;
     const x = padL + i * step + (step - barW) / 2;
@@ -386,7 +391,7 @@ function drawTrimWave() {
     const y = center - h / 2;
     const selected = frac >= trim.start / total && frac <= trim.end / total;
     ctxBars.fillStyle = selected
-      ? (preview ? preview.theme.played : cssVar("--brand-orange", "#A8E6CF"))
+      ? selGrad
       : cssVar("--trim-dim", "rgba(17, 24, 39, 0.12)");
     const r = Math.min(barW / 2, h / 2);
     ctxBars.beginPath();
@@ -394,9 +399,9 @@ function drawTrimWave() {
     ctxBars.fill();
   }
 
-  // Start / end handles.
-  drawHandle(ctx, sX, bh, cssVar("--brand-orange", "#f97316"));
-  drawHandle(ctx, eX, bh, cssVar("--text-main", "#111827"));
+  // Start / end handles — both use the Instagram pink accent.
+  drawHandle(ctx, sX, bh, cssVar("--brand-orange", "#d62976"));
+  drawHandle(ctx, eX, bh, cssVar("--brand-orange", "#d62976"));
 }
 
 function drawHandle(ctx, x, bh, color) {
