@@ -84,10 +84,21 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 /* --- Header --- */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg-body) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03);
+}
+
+.header-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 28px 0;
+  padding: 16px 32px;
 }
 
 .logo-group {
@@ -653,7 +664,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 
 @media (max-width: 600px) {
-  .header { flex-direction: row; justify-content: space-between; align-items: center; gap: 12px; }
+  .header-inner { flex-direction: row; justify-content: space-between; align-items: center; gap: 12px; }
   .header .privacy-badge { display: none; }
   .hero-title { font-size: 2.4rem; }
   .note-card { padding: 10px; }
