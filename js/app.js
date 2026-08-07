@@ -123,7 +123,7 @@ const GEN_ICON_BY_LABEL = {
 
 function setGenerateLabel(text) {
   els.generateLabel.textContent = text;
-  els.generateBtn.dataset.icon = GEN_ICON_BY_LABEL[text] || "";
+  els.generateBtn.dataset.icon = GEN_ICON_BY_LABEL[text] || "generate";
 }
 
 /** Show/hide the red "don't switch tabs / close the browser" warning. */

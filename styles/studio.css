@@ -904,6 +904,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 
 /* State icons — shown via the button's data-icon attribute. */
 #preparing-icon, #recording-icon, #converting-icon, #download-icon { display: none; }
+.btn-generate[data-icon]:not([data-icon="generate"]) #generate-icon { display: none; }
 .btn-generate[data-icon="preparing"] #preparing-icon,
 .btn-generate[data-icon="recording"] #recording-icon,
 .btn-generate[data-icon="converting"] #converting-icon,
