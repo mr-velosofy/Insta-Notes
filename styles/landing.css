@@ -291,7 +291,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   border-radius: 18px;
   overflow: hidden;
   background: #591c71;
-  box-shadow: 0 20px 50px -20px rgba(245, 117, 254, 0.5);
+  box-shadow: 0 20px 50px -20px rgba(193, 26, 205, 0.5);
 }
 
 .note {
