@@ -962,12 +962,29 @@ let micPending = false; // true while getUserMedia is in flight (spam guard)
 let micStream = null; // cached mic stream, reused across recordings
 
 /** Return a live mic stream, reusing the cached one so a second recording
- *  starts instantly instead of re-opening the device. */
+ *  starts instantly instead of re-opening the device.
+ *
+ *  Capture is RAW: all WebRTC call-grade processing (echo cancellation,
+ *  noise suppression, auto gain) is disabled, and the stream is mono 48kHz —
+ *  the same character as Instagram / native recorder apps. Falls back to
+ *  browser defaults if the browser rejects object constraints. */
 async function getMicStream() {
   if (micStream && micStream.getAudioTracks().some((t) => t.readyState === "live")) {
     return micStream;
   }
-  micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const raw = {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+    channelCount: 1,
+    sampleRate: 48000,
+  };
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: raw });
+  } catch (err) {
+    console.warn("Raw mic constraints rejected, falling back to defaults:", err);
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  }
   return micStream;
 }
 
@@ -985,8 +1002,14 @@ async function toggleRecord() {
   setStatus("", "Accessing microphone…");
   try {
     const stream = await getMicStream();
+    // Pause any playback so the raw (unprocessed) mic doesn't pick up the
+    // speaker output mid-take.
+    if (preview && preview.timeline.running) {
+      preview.pause();
+      setPlayLabel(false);
+    }
     const chunks = [];
-    const recorder = new MediaRecorder(stream);
+    const recorder = new MediaRecorder(stream, { audioBitsPerSecond: 192000 });
     recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
     recorder.onstop = () => {
       // The stream is kept alive for the next recording (cached).
@@ -1187,7 +1210,7 @@ async function convertToMp4(webmBlob) {
     "-crf", "18",
     "-pix_fmt", "yuv420p",
     "-c:a", "aac",
-    "-b:a", "128k",
+    "-b:a", "192k",
     "-movflags", "+faststart",
     "output.mp4",
   ]);

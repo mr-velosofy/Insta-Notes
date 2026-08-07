@@ -62,7 +62,7 @@ export class Recorder {
     this.mediaRecorder = new MediaRecorder(this.stream, {
       mimeType: this.mimeType || undefined,
       videoBitsPerSecond: 16_000_000,
-      audioBitsPerSecond: 128_000,
+      audioBitsPerSecond: 192_000,
     });
     this.chunks = [];
 
