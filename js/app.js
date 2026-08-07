@@ -402,6 +402,27 @@ function bufferCtx() {
   return sharedCtx;
 }
 
+/** Scale the buffer in place so its peak hits `target` (no-op when it's
+ *  already at/above it). Gives raw mic takes a healthy, consistent
+ *  loudness like native recorder apps without ever clipping. */
+function normalizePeak(buffer, target = 0.9) {
+  let peak = 0;
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = 0; i < d.length; i++) {
+      const a = Math.abs(d[i]);
+      if (a > peak) peak = a;
+    }
+  }
+  if (peak <= 0 || peak >= target) return buffer;
+  const gain = target / peak;
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = 0; i < d.length; i++) d[i] *= gain;
+  }
+  return buffer;
+}
+
 /** Offline context used only for decoding: decodeAudioData runs off the main
  *  thread here, keeping the UI (skeleton shimmer, etc.) smooth on long files. */
 let offlineDecodeCtx = null;
@@ -915,6 +936,10 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
     }
 
     const decoded = await decodeBlob(blob);
+
+    // Raw mic takes are captured without AGC, so boost them to a healthy
+    // peak loudness (deterministic: also applies when restored from cache).
+    if (name === "Voice note") normalizePeak(decoded, 0.9);
 
     // Backstop: the metadata probe can misreport for some containers.
     if (decoded.duration > MAX_SOURCE_DURATION + 0.5) {
