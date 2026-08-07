@@ -19,6 +19,7 @@ import { DURATION, WIDTH } from "./timeline.js";
 
 const MAX_DURATION = 180; // 3:00 export cap (seconds)
 const MAX_SOURCE_DURATION = 600; // 10:00 max load/record (seconds)
+const MAX_SOURCE_LABEL = "10 minutes";
 const LS_THEME = "inote-theme";
 const DEBUG = new URLSearchParams(location.search).has("debug");
 
@@ -82,7 +83,8 @@ function showToast(msg) {
   toastTimer = setTimeout(() => els.toast.classList.remove("show"), 4000);
 }
 
-/** Toggle the skeleton shimmer over the trim wave while audio loads. */
+/** Toggle the skeleton shimmer over the trim wave while audio loads. The
+ *  previous waveform fades out so the swap doesn't flash the old bars. */
 function setTrimSkeleton(show) {
   const sk = els.trimSkeleton;
   if (!sk) return;
@@ -91,6 +93,7 @@ function setTrimSkeleton(show) {
     sk.innerHTML = "<i></i>".repeat(32);
   }
   sk.hidden = !show;
+  els.trimWave.classList.toggle("trim-wave-loading", show);
 }
 
 /** Read a CSS custom property set by /js/theme.js, with a fallback. */
@@ -850,8 +853,8 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
   setTrimSkeleton(true);
   try {
     if (await probeTooLong(blob)) {
-      setStatus("", `Audio is too long — max ${fmtTime(MAX_SOURCE_DURATION)}`);
-      showToast(`Audio is longer than ${fmtTime(MAX_SOURCE_DURATION)}. Please use a shorter file.`);
+      setStatus("", `Audio is too long — max ${MAX_SOURCE_LABEL}`);
+      showToast(`Audio is longer than ${MAX_SOURCE_LABEL}. Please use a shorter file.`);
       return;
     }
 
@@ -859,8 +862,8 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
 
     // Backstop: the metadata probe can misreport for some containers.
     if (decoded.duration > MAX_SOURCE_DURATION + 0.5) {
-      setStatus("", `Audio is too long — max ${fmtTime(MAX_SOURCE_DURATION)}`);
-      showToast(`Audio is longer than ${fmtTime(MAX_SOURCE_DURATION)}. Please use a shorter file.`);
+      setStatus("", `Audio is too long — max ${MAX_SOURCE_LABEL}`);
+      showToast(`Audio is longer than ${MAX_SOURCE_LABEL}. Please use a shorter file.`);
       return;
     }
     sourceBlob = blob;
@@ -927,9 +930,9 @@ async function toggleRecord() {
     const startTime = Date.now();
     const timer = setInterval(() => {
       const el = (Date.now() - startTime) / 1000;
-      setStatus("recording", `Recording… ${fmtTime(el)} (max ${fmtTime(MAX_SOURCE_DURATION)})`);
+      setStatus("recording", `Recording… ${fmtTime(el)} (max ${MAX_SOURCE_LABEL})`);
       if (el >= MAX_SOURCE_DURATION) {
-        showToast(`Recording reached the ${fmtTime(MAX_SOURCE_DURATION)} limit.`);
+        showToast(`Recording reached the ${MAX_SOURCE_LABEL} limit.`);
         stopRecording();
       }
     }, 250);

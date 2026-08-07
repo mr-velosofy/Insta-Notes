@@ -777,7 +777,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   align-items: center;
   justify-content: center;
   width: 0;
-  height: 50px;
+  align-self: stretch;
   flex-shrink: 0;
   overflow: hidden;
   opacity: 0;
@@ -842,7 +842,9 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   height: 72px;
   cursor: ew-resize;
   touch-action: none;
+  transition: opacity 0.25s ease;
 }
+#trim-wave.trim-wave-loading { opacity: 0; }
 #trim-wave.locked { opacity: 0.5; pointer-events: none; }
 
 /* Skeleton shown while the audio decodes / is restored from cache. */
@@ -1235,7 +1237,8 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   .footer { padding: 8px 16px 24px; }
 }
 
-/* Transient error toast (auto-dismissed by app.js) */
+/* Transient warning toast (auto-dismissed by app.js) — glassy amber so it
+   reads as a warning while staying readable over any theme. */
 .toast {
   position: fixed;
   left: 50%;
@@ -1243,13 +1246,15 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   transform: translate(-50%, 16px);
   max-width: min(480px, calc(100vw - 32px));
   padding: 12px 18px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  box-shadow: var(--shadow-lg);
+  background: color-mix(in srgb, #fbbf24 18%, transparent);
+  border: 1px solid rgba(245, 158, 11, 0.6);
+  border-radius: 12px;
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.25);
   color: var(--text-main);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   text-align: center;
   opacity: 0;
   pointer-events: none;
