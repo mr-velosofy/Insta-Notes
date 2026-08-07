@@ -19,6 +19,8 @@
   --panel-border: #d1d5db;
   --btn-bg-light: #eef0f2;
   --btn-bg-hover: #e2e5e9;
+  --skeleton-base: #dde1e7;
+  --skeleton-shine: #f6f8fa;
   --accent-soft: #fff7ed;
   --accent-soft-2: #ffedd5;
   --btn-primary-bg: #111111;
@@ -865,9 +867,9 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    var(--btn-bg-light) 25%,
-    var(--panel-border) 37%,
-    var(--btn-bg-light) 63%
+    var(--skeleton-base) 25%,
+    var(--skeleton-shine) 37%,
+    var(--skeleton-base) 63%
   );
   background-size: 400% 100%;
   animation: skeletonShimmer 1.4s ease infinite;

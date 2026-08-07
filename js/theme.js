@@ -39,6 +39,8 @@
     panelBorder: "#d1d5db",
     btn: "#eef0f2",
     btnHover: "#e2e5e9",
+    skeleton: "#dde1e7",
+    skeletonShine: "#f6f8fa",
   };
   var DARK = {
     bg: "#0f1115",
@@ -50,6 +52,8 @@
     panelBorder: "rgba(255,255,255,0.14)",
     btn: "rgba(255,255,255,0.06)",
     btnHover: "rgba(255,255,255,0.12)",
+    skeleton: "rgba(255,255,255,0.10)",
+    skeletonShine: "rgba(255,255,255,0.20)",
   };
 
   function hexRgb(hex) {
@@ -116,6 +120,8 @@
     set("--panel-border", P.panelBorder);
     set("--btn-bg-light", P.btn);
     set("--btn-bg-hover", P.btnHover);
+    set("--skeleton-base", P.skeleton);
+    set("--skeleton-shine", P.skeletonShine);
     set("--input-bg", P.surface);
 
     set("--insta-gradient", INSTA_GRADIENT);
