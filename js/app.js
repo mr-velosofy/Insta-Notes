@@ -90,10 +90,19 @@ function setTrimSkeleton(show) {
   if (!sk) return;
   if (show && !sk.dataset.ready) {
     sk.dataset.ready = "1";
-    sk.innerHTML = "<i></i>".repeat(32);
+    renderSkeletonBars();
   }
   sk.hidden = !show;
   els.trimWave.classList.toggle("trim-wave-loading", show);
+}
+
+/** (Re)build the skeleton bars at ~5px per bar, matching the trim wave count
+ *  so it looks the same at every screen size. */
+function renderSkeletonBars() {
+  const sk = els.trimSkeleton;
+  if (!sk || !sk.dataset.ready) return;
+  const w = sk.clientWidth || 640;
+  sk.innerHTML = "<i></i>".repeat(Math.max(24, Math.floor(w / 5)));
 }
 
 /** Read a CSS custom property set by /js/theme.js, with a fallback. */
@@ -1433,6 +1442,7 @@ function wire() {
   // Redraw at the new bar count when the window resizes.
   window.addEventListener("resize", () => {
     if (sourceBuffer) drawTrimWave();
+    renderSkeletonBars();
   });
 
   wireAvatar();
