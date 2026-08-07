@@ -986,28 +986,59 @@ let micRec = null; // { stream, recorder, chunks, timer, startTime }
 let micPending = false; // true while getUserMedia is in flight (spam guard)
 let micStream = null; // cached mic stream, reused across recordings
 
+// Mic mode: "voice" = raw unprocessed capture; "studio" = with noise
+// suppression / echo cancellation / auto gain (call-grade cleanup).
+const MIC_MODE_KEY = "inote-mic-mode";
+let micMode = "voice";
+try { micMode = localStorage.getItem(MIC_MODE_KEY) || "voice"; } catch (_) {}
+
+/** Switch the capture mode and drop the cached stream (it was created with
+ *  the previous constraints, so it must be re-requested). */
+function setMicMode(mode) {
+  micMode = mode;
+  try { localStorage.setItem(MIC_MODE_KEY, mode); } catch (_) {}
+  document.querySelectorAll(".mic-mode-btn").forEach((b) => {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
+  if (micStream && !micRec) {
+    micStream.getTracks().forEach((t) => t.stop());
+    micStream = null;
+  }
+}
+
 /** Return a live mic stream, reusing the cached one so a second recording
  *  starts instantly instead of re-opening the device.
  *
- *  Capture is RAW: all WebRTC call-grade processing (echo cancellation,
- *  noise suppression, auto gain) is disabled, and the stream is mono 48kHz —
- *  the same character as Instagram / native recorder apps. Falls back to
- *  browser defaults if the browser rejects object constraints. */
+ *  Voice mode captures RAW: all WebRTC call-grade processing (echo
+ *  cancellation, noise suppression, auto gain) disabled, mono 48kHz — the
+ *  same character as Instagram / native recorder apps. Studio mode enables
+ *  that processing to clean up background noise. Falls back to browser
+ *  defaults if the browser rejects object constraints. */
 async function getMicStream() {
   if (micStream && micStream.getAudioTracks().some((t) => t.readyState === "live")) {
     return micStream;
   }
-  const raw = {
-    echoCancellation: false,
-    noiseSuppression: false,
-    autoGainControl: false,
-    channelCount: 1,
-    sampleRate: 48000,
-  };
+  const constraints = micMode === "studio"
+    ? {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 48000,
+      }
+    : {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        channelCount: 1,
+        sampleRate: 48000,
+      };
   try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: raw });
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
   } catch (err) {
-    console.warn("Raw mic constraints rejected, falling back to defaults:", err);
+    console.warn("Mic constraints rejected, falling back to defaults:", err);
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
   }
   return micStream;
@@ -1305,6 +1336,7 @@ const LOCKABLE = [
   els.trimEnd,
   els.trimReset,
   els.fileRemove,
+  ...document.querySelectorAll(".mic-mode-btn"),
 ];
 
 /** Disable user-facing controls (avatar, theme, audio, trim) while busy. */
@@ -1526,6 +1558,11 @@ function wire() {
     els.audioInput.value = "";
   });
   els.recordBtn.addEventListener("click", toggleRecord);
+  document.querySelectorAll(".mic-mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setMicMode(btn.dataset.mode));
+  });
+  // Sync the toggle UI with the persisted mode on load.
+  setMicMode(micMode);
   els.playBtn.addEventListener("click", () => {
     void playPreview();
   });

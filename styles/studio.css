@@ -632,6 +632,48 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 
 .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Mic mode (Voice = raw, Studio = noise suppression) segmented toggle. */
+.mic-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 0 2px;
+}
+.mic-mode-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mic-mode-seg {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  background-color: var(--btn-bg-light);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+}
+.mic-mode-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+}
+.mic-mode-btn:hover { color: var(--text-main); }
+.mic-mode-btn.active {
+  background-color: var(--btn-primary-bg, #d62976);
+  color: var(--btn-primary-fg, #fff);
+}
+.mic-mode-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Recording state — clearly distinct from idle (red ring + pulsing dot +
    red title) so "start" vs "stop" is obvious. */
 .action-btn.recording {
