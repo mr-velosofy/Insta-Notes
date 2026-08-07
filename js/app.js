@@ -1485,7 +1485,13 @@ async function runGenerate() {
     setControlsLocked(false);
     els.generateBtn.disabled = false;
     els.playBtn.disabled = false;
-    if (!lastMp4) setGenerateLabel("Generate");
+    // After a cancelled/failed generate the label must return to "Generate";
+    // only a successful render (ready) keeps the Download state.
+    if (els.generateBtn.classList.contains("ready")) {
+      setGenerateLabel("Download");
+    } else {
+      setGenerateLabel("Generate");
+    }
     updateSlotButton();
     setPlayLabel(false);
   }
