@@ -889,17 +889,26 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   min-width: 220px;
   overflow: hidden;
   background-color: var(--btn-primary-bg, #111);
-  background-image: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75);
-  background-size: 400% 100%;
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   color: var(--btn-primary-fg, white);
   padding: 14px 40px;
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   transition: background-color 0.2s, transform 0.2s, filter 0.2s;
-  animation: btnGradSlide 14s linear infinite;
 }
-.btn-generate.ready { animation: none; }
+/* Rotating brand-color blob behind the button content. */
+.btn-generate::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  background: conic-gradient(from 0deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75);
+  filter: blur(18px);
+  animation: btnGradSpin 16s linear infinite;
+  pointer-events: none;
+}
+@keyframes btnGradSpin { to { transform: rotate(360deg); } }
+.btn-generate.ready::before { animation: none; opacity: 0; }
 .btn-generate > * { position: relative; z-index: 1; }
 .btn-generate:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
 .btn-generate svg { width: 20px; height: 20px; }
@@ -915,13 +924,6 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-generate[data-icon="preparing"] #preparing-icon,
 .btn-generate[data-icon="converting"] #converting-icon { animation: genSpin 1.1s linear infinite; }
 @keyframes genSpin { to { transform: rotate(360deg); } }
-
-/* Gradient slides left one full tile width (background-size 400%, so one
-   loop = 4 button widths → 133.33% shift) — restarts seamlessly. */
-@keyframes btnGradSlide {
-  from { background-position: 0% 0; }
-  to { background-position: -133.333% 0; }
-}
 
 /* Progress fills the button itself with color. The button base is the theme's
    accent color, so the fill uses the button's text color as a translucent

@@ -80,6 +80,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .hero-content, .note-card { animation: none !important; }
   .hero .btn-primary, .try-link { animation: none !important; }
+  .btn-primary::before { animation: none; }
 }
 
 /* --- Header --- */
@@ -230,12 +231,13 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 
 .btn-primary {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  overflow: hidden;
   background-color: var(--btn-primary-bg, #111);
-  background-image: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75);
-  background-size: 400% 100%;
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   color: var(--btn-primary-fg, white);
   padding: 14px 28px;
   border-radius: 12px;
@@ -243,23 +245,28 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   font-weight: 700;
   box-shadow: var(--shadow-md);
   transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
-  animation: btnGradSlide 14s linear infinite;
 }
+.btn-primary > * { position: relative; z-index: 1; }
+/* Rotating brand-color blob behind the button content. */
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  background: conic-gradient(from 0deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75);
+  filter: blur(18px);
+  animation: btnGradSpin 16s linear infinite;
+  pointer-events: none;
+}
+@keyframes btnGradSpin { to { transform: rotate(360deg); } }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
 /* Hero "Start Creating" — a soft accent glow whose opacity gently pulses.
    The button and its text stay perfectly still. */
-.hero .btn-primary { animation: heroCtaPulse 2.2s ease-in-out infinite, btnGradSlide 14s linear infinite; }
+.hero .btn-primary { animation: heroCtaPulse 2.2s ease-in-out infinite; }
 @keyframes heroCtaPulse {
   0%, 100% { box-shadow: var(--shadow-md), 0 0 22px -2px color-mix(in srgb, var(--btn-primary-bg, #111) 15%, transparent); }
   50% { box-shadow: var(--shadow-md), 0 0 38px 0 color-mix(in srgb, var(--btn-primary-bg, #111) 45%, transparent); }
-}
-/* Gradient slides left one full tile width (background-size 400%, so one
-   loop = 4 button widths → 133.33% shift) — restarts seamlessly. */
-@keyframes btnGradSlide {
-  from { background-position: 0% 0; }
-  to { background-position: -133.333% 0; }
 }
 
 .btn-secondary-link {
@@ -665,7 +672,8 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   position: relative;
 }
 .final-cta .btn-primary {
-  background-image: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75);
+  background-color: var(--btn-primary-bg, var(--brand-orange));
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
   color: var(--btn-primary-fg, #fff);
 }
 .final-cta .btn-primary:hover { background-color: var(--btn-primary-hover, #ea580c); filter: brightness(1.08); }
