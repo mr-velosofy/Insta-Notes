@@ -1158,3 +1158,30 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   /* Footer — side padding on mobile. */
   .footer { padding: 8px 16px 24px; }
 }
+
+/* Transient error toast (auto-dismissed by app.js) */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 16px);
+  max-width: min(480px, calc(100vw - 32px));
+  padding: 12px 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  color: var(--text-main);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 200;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

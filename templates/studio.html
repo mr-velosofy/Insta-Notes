@@ -201,11 +201,11 @@
                         <div class="input-items">
                             <div class="input-item">
                                 <label for="trim-start">Start</label>
-                                <input id="trim-start" class="time-input" type="number" min="0" max="180" value="0" step="0.01" />
+                                <input id="trim-start" class="time-input" type="number" min="0" max="600" value="0" step="0.01" />
                             </div>
                             <div class="input-item">
                                 <label for="trim-end">End</label>
-                                <input id="trim-end" class="time-input" type="number" min="0" max="180" value="10" step="0.01" />
+                                <input id="trim-end" class="time-input" type="number" min="0" max="600" value="10" step="0.01" />
                             </div>
                         </div>
 
@@ -342,6 +342,8 @@
             (MediaRecorder / captureStream / canvas.toBlob).</p>
         <p>Please use a recent version of Chrome, Edge, Brave, or Firefox.</p>
     </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script type="module" src="/js/app.js"></script>
 </body>

@@ -17,7 +17,8 @@ import { Recorder } from "./recorder.js";
 import { createColorPicker } from "./colorpicker.js";
 import { DURATION, WIDTH } from "./timeline.js";
 
-const MAX_DURATION = 180; // 3:00 cap (seconds)
+const MAX_DURATION = 180; // 3:00 export cap (seconds)
+const MAX_SOURCE_DURATION = 600; // 10:00 max load/record (seconds)
 const LS_THEME = "inote-theme";
 const DEBUG = new URLSearchParams(location.search).has("debug");
 
@@ -53,6 +54,7 @@ const els = {
   resetBtn: document.getElementById("reset-btn"),
   statusDot: document.getElementById("status-dot"),
   statusText: document.getElementById("status-text"),
+  toast: document.getElementById("toast"),
   busyWarning: document.getElementById("busy-warning"),
   stepAudio: document.getElementById("step-audio"),
   stepTrim: document.getElementById("step-trim"),
@@ -65,6 +67,17 @@ const els = {
 function setStatus(state, text) {
   els.statusDot.className = state ? `recording ${state}` : "";
   els.statusText.textContent = text;
+}
+
+let toastTimer = null;
+
+/** Transient error popup that auto-hides after a few seconds. */
+function showToast(msg) {
+  if (!els.toast) return;
+  els.toast.textContent = msg;
+  els.toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => els.toast.classList.remove("show"), 4000);
 }
 
 /** Read a CSS custom property set by /js/theme.js, with a fallback. */
@@ -163,7 +176,7 @@ let currentDuration = DURATION;
 let lastMp4 = null;
 let fileName = "demo.mp3";
 
-// Full decoded audio (capped to MAX_DURATION) + the active trim range.
+// Full decoded audio (up to MAX_SOURCE_DURATION) + the active trim range.
 let sourceBuffer = null; // AudioBuffer (full, capped)
 let trim = { start: 0, end: 0 };
 let sourceBlob = null; // compact original blob (for persistence / restore)
@@ -326,7 +339,12 @@ function clampTrim() {
   let s = Number(trim.start) || 0;
   let e = Number(trim.end) || total;
   s = Math.max(0, Math.min(s, total - 0.5));
-  e = Math.max(Math.min(e, total), s + 0.5);
+  e = Math.min(total, Math.max(e, s + 0.5));
+  // Export length is capped at MAX_DURATION: pull the window back to fit.
+  if (e - s > MAX_DURATION) {
+    s = Math.max(0, e - MAX_DURATION);
+    e = Math.min(total, s + MAX_DURATION);
+  }
   trim.start = s;
   trim.end = e;
 }
@@ -364,11 +382,14 @@ function applyTrim() {
 function resetTrim() {
   if (!sourceBuffer) return;
   trim.start = 0;
-  trim.end = sourceBuffer.duration;
+  trim.end = Math.min(sourceBuffer.duration, MAX_DURATION);
   applyTrim();
 }
 
 function updateTrimUI() {
+  const total = sourceBuffer.duration;
+  els.trimStart.max = Math.floor(total);
+  els.trimEnd.max = Math.floor(total);
   els.trimStart.value = Math.max(0, +fmtDur(trim.start));
   els.trimEnd.value = +fmtDur(trim.end);
   els.trimSelected.textContent = fmtTime(trim.end - trim.start);
@@ -463,12 +484,17 @@ function onTrimPointerDown(e) {
 function onTrimPointerMove(e) {
   if (!dragHandle || !sourceBuffer) return;
   const t = xToTime(e.clientX);
+  const total = sourceBuffer.duration;
   if (dragHandle === "start") {
-    trim.start = Math.max(0, Math.min(trim.end - 0.5, t));
+    // Keep the selection within the 3-minute export window.
+    trim.start = Math.max(
+      Math.max(0, trim.end - MAX_DURATION),
+      Math.min(trim.end - 0.5, t)
+    );
   } else {
     trim.end = Math.min(
-      sourceBuffer.duration,
-      Math.max(trim.start + 0.5, Math.min(MAX_DURATION, t))
+      total,
+      Math.max(trim.start + 0.5, Math.min(trim.start + MAX_DURATION, t))
     );
   }
   els.trimStart.value = +fmtDur(Math.max(0, trim.start));
@@ -734,25 +760,27 @@ async function decodeBlob(blob) {
 async function loadSourceFromBlob(blob, name, restoreTrim = null) {
   try {
     const decoded = await decodeBlob(blob);
+
+    if (decoded.duration > MAX_SOURCE_DURATION + 0.5) {
+      setStatus("", `Audio is too long — max ${fmtTime(MAX_SOURCE_DURATION)}`);
+      showToast(`Audio is longer than ${fmtTime(MAX_SOURCE_DURATION)}. Please use a shorter file.`);
+      return;
+    }
     sourceBlob = blob;
     fileName = name;
 
-    // Cap to MAX_DURATION.
-    let capped = decoded;
-    if (decoded.duration > MAX_DURATION) {
-      capped = sliceBuffer(decoded, 0, MAX_DURATION);
-      setStatus("", `Audio capped to ${fmtTime(MAX_DURATION)}`);
-    }
-    sourceBuffer = capped;
+    // Files up to MAX_SOURCE_DURATION load in full; the trim window caps the
+    // export length at MAX_DURATION.
+    sourceBuffer = decoded;
     sourceEnvelope = audioVolumeEnvelope(sourceBuffer, TRIM_BARS);
 
     if (restoreTrim && restoreTrim.end > 0) {
       trim = {
         start: Math.max(0, Math.min(restoreTrim.start, restoreTrim.end - 0.5)),
-        end: Math.min(capped.duration, Math.max(restoreTrim.end, restoreTrim.start + 0.5)),
+        end: Math.min(decoded.duration, Math.max(restoreTrim.end, restoreTrim.start + 0.5)),
       };
     } else {
-      trim = { start: 0, end: capped.duration };
+      trim = { start: 0, end: Math.min(decoded.duration, MAX_DURATION) };
     }
 
     // New audio means the previous generated MP4 is stale — reset it.
@@ -800,8 +828,11 @@ async function toggleRecord() {
     const startTime = Date.now();
     const timer = setInterval(() => {
       const el = (Date.now() - startTime) / 1000;
-      setStatus("recording", `Recording… ${fmtTime(el)} (max ${fmtTime(MAX_DURATION)})`);
-      if (el >= MAX_DURATION) stopRecording();
+      setStatus("recording", `Recording… ${fmtTime(el)} (max ${fmtTime(MAX_SOURCE_DURATION)})`);
+      if (el >= MAX_SOURCE_DURATION) {
+        showToast(`Recording reached the ${fmtTime(MAX_SOURCE_DURATION)} limit.`);
+        stopRecording();
+      }
     }, 250);
     micRec = { stream, recorder, chunks, timer, startTime };
     setRecordLabel(true);
@@ -1239,7 +1270,7 @@ function wire() {
     applyTrim();
   });
   els.trimEnd.addEventListener("change", () => {
-    trim.end = Number(els.trimEnd.value) || (sourceBuffer ? sourceBuffer.duration : MAX_DURATION);
+    trim.end = Number(els.trimEnd.value) || (sourceBuffer ? Math.min(sourceBuffer.duration, trim.start + MAX_DURATION) : MAX_DURATION);
     applyTrim();
   });
   els.trimReset.addEventListener("click", resetTrim);
