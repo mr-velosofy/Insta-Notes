@@ -80,7 +80,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .hero-content, .note-card { animation: none !important; }
   .hero .btn-primary, .try-link { animation: none !important; }
-  .btn-primary::before, .btn-glow-wrap::before { animation: none; }
+  .btn-primary::before { animation: none; }
 }
 
 /* --- Header --- */
@@ -261,26 +261,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
-/* Hero "Start Creating" — a blurred duplicate of the button's gradient
-   sitting right behind it (same size, same conic, same 16s rotation), so
-   the soft aura matches the button's edge colors exactly. */
-.btn-glow-wrap { position: relative; display: inline-block; }
-.btn-glow-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: 12px;
-  background-image: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75);
-  background-size: 200% 100%;
-  filter: blur(14px);
-  animation: btnGlowSlide 16s linear infinite;
-  pointer-events: none;
-}
-@keyframes btnGlowSlide {
-  from { background-position: 0% 0; }
-  to { background-position: -200% 0; }
-}
+/* Hero "Start Creating" — no glow, plain button. */
 
 .btn-secondary-link {
   display: inline-flex;
