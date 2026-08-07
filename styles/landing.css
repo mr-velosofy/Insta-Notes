@@ -81,7 +81,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
   .hero-content, .note-card { animation: none !important; }
   .hero .btn-primary, .try-link { animation: none !important; }
   .btn-primary::before { animation: none; }
-  .wave-char { animation: none !important; }
 }
 
 /* --- Header --- */
@@ -261,23 +260,6 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 @keyframes btnGradSpin { to { transform: rotate(360deg); } }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
-
-/* "Start Creating": each character eases its skew upright -> italic -> upright.
-   The per-char animation-delay (--i) staggers the wave so the slant travels
-   continuously across the label. transform animates on the compositor in every
-   browser (the variable slnt axis would be ignored on Inter's roman face). */
-.wave-char {
-  display: inline-block;
-  white-space: pre;
-  will-change: transform;
-  animation: charWave 3.2s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 110ms);
-}
-@keyframes charWave {
-  0%   { transform: skewX(0deg); }
-  50%  { transform: skewX(-10deg); }
-  100% { transform: skewX(0deg); }
-}
 
 /* Hero "Start Creating" — no glow, plain button. */
 
