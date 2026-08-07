@@ -34,7 +34,7 @@
     <link rel="manifest" href="/assets/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles/landing.css" />
     <script src="/js/theme.js"></script>
 </head>
@@ -97,7 +97,7 @@
                         <path d="M20 3v4"/>
                         <path d="M22 5h-4"/>
                     </svg>
-                    <span>Start Creating</span>
+                    <span id="cta-label">Start Creating</span>
                 </a>
             </div>
 
@@ -440,6 +440,21 @@
                     requestAnimationFrame(animFrame);
                 }
                 requestAnimationFrame(animFrame);
+            }
+
+            // --- "Start Creating": flip Inter normal <-> italic per character,
+            // staggered so the change travels across the label like a wave. ---
+            var ctaLabel = document.getElementById('cta-label');
+            if (ctaLabel) {
+                var text = ctaLabel.textContent;
+                ctaLabel.textContent = '';
+                for (var ci = 0; ci < text.length; ci++) {
+                    var ch = document.createElement('span');
+                    ch.className = 'wave-char';
+                    ch.style.setProperty('--i', String(ci));
+                    ch.textContent = text.charAt(ci);
+                    ctaLabel.appendChild(ch);
+                }
             }
 
             // --- Scroll reveal: scroll-linked & reversible. opacity + translate

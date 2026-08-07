@@ -81,6 +81,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   .hero-content, .note-card { animation: none !important; }
   .hero .btn-primary, .try-link { animation: none !important; }
   .btn-primary::before { animation: none; }
+  .wave-char { animation: none !important; }
 }
 
 /* --- Header --- */
@@ -260,6 +261,22 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 @keyframes btnGradSpin { to { transform: rotate(360deg); } }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
+
+/* "Start Creating": each character flips Inter normal -> italic -> normal.
+   The per-char animation-delay (--i) staggers the flips so the change travels
+   across the label like a wave, first upright then italicized. */
+.wave-char {
+  display: inline-block;
+  white-space: pre;
+  font-style: normal;
+  animation: charWave 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 90ms);
+}
+@keyframes charWave {
+  0%   { font-style: normal; }
+  50%  { font-style: italic; }
+  100% { font-style: normal; }
+}
 
 /* Hero "Start Creating" — no glow, plain button. */
 
