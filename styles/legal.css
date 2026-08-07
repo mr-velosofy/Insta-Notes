@@ -1,11 +1,11 @@
 /* Shared styling for the Privacy Policy and Terms of Service pages.
    Uses the same CSS variables theme.js injects, so light/dark mode just works. */
 :root {
-  --bg-body: #fafafa;
+  --bg-body: #f4f5f7;
   --text-main: #111827;
   --text-muted: #4b5563;
-  --text-light: #9ca3af;
-  --border-color: #f3f4f6;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
   --card-bg: #ffffff;
 }
 
@@ -45,6 +45,33 @@ a { text-decoration: none; color: inherit; }
   gap: 16px;
   padding: 14px 20px;
 }
+
+.legal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Light / dark mode toggle (same as the main pages). */
+.ui-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.ui-mode-btn:hover { background-color: var(--btn-bg-light); }
+.ui-mode-btn svg { width: 18px; height: 18px; }
+.ui-mode-btn .icon-sun { display: none; }
+html[data-ui-mode="dark"] .ui-mode-btn .icon-sun { display: block; }
+html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 
 .logo-group {
   display: flex;

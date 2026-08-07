@@ -1,13 +1,13 @@
 :root {
   /* Colors matching the landing page — default fallbacks; theme.js overrides
      these live via inline custom properties using the studio's saved theme. */
-  --bg-body: #fafafa;
+  --bg-body: #f4f5f7;
   --text-main: #111827;
   --text-muted: #4b5563;
-  --text-light: #9ca3af;
+  --text-light: #6b7280;
   --brand-orange: #f97316;
   --brand-orange-light: #fff7ed;
-  --border-color: #f3f4f6;
+  --border-color: #e5e7eb;
   --card-bg: #ffffff;
 
   /* Shadows */
@@ -16,9 +16,9 @@
   --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.15);
 
   /* Studio Specific */
-  --panel-border: #e5e7eb;
-  --btn-bg-light: #f9fafb;
-  --btn-bg-hover: #f3f4f6;
+  --panel-border: #d1d5db;
+  --btn-bg-light: #eef0f2;
+  --btn-bg-hover: #e2e5e9;
   --accent-soft: #fff7ed;
   --accent-soft-2: #ffedd5;
   --btn-primary-bg: #111111;

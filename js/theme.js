@@ -30,15 +30,15 @@
 
   // Neutral light/dark UI palettes.
   var LIGHT = {
-    bg: "#fafafa",
+    bg: "#f4f5f7",
     surface: "#ffffff",
     text: "#111827",
     textMuted: "#4b5563",
-    textLight: "#9ca3af",
-    border: "#f3f4f6",
-    panelBorder: "#e5e7eb",
-    btn: "#f9fafb",
-    btnHover: "#f3f4f6",
+    textLight: "#6b7280",
+    border: "#e5e7eb",
+    panelBorder: "#d1d5db",
+    btn: "#eef0f2",
+    btnHover: "#e2e5e9",
   };
   var DARK = {
     bg: "#0f1115",
