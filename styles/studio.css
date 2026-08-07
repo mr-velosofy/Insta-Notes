@@ -930,11 +930,16 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 
 /* Ready = Download state. */
+#download-icon { display: none; }
 .btn-generate.ready {
   background-color: var(--success, #16a34a);
+  background-image: linear-gradient(135deg, #34d399, #16a34a 55%, #15803d);
+  box-shadow: 0 8px 24px -8px rgba(22, 163, 74, 0.6);
 }
+.btn-generate.ready #generate-icon { display: none; }
+.btn-generate.ready #download-icon { display: block; }
 .btn-generate.ready:hover:not(:disabled) {
-  background-color: var(--success-hover, #15803d);
+  filter: brightness(1.08);
   transform: translateY(-1px);
 }
 
