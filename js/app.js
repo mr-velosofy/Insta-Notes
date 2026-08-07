@@ -113,8 +113,17 @@ function setProgress(pct) {
 }
 
 /** Set the text shown inside the generate button. */
+const GEN_ICON_BY_LABEL = {
+  "Generate": "generate",
+  "Preparing…": "preparing",
+  "Recording…": "recording",
+  "Converting…": "converting",
+  "Download": "download",
+};
+
 function setGenerateLabel(text) {
   els.generateLabel.textContent = text;
+  els.generateBtn.dataset.icon = GEN_ICON_BY_LABEL[text] || "";
 }
 
 /** Show/hide the red "don't switch tabs / close the browser" warning. */

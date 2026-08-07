@@ -901,7 +901,17 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-generate:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
 .btn-generate svg { width: 20px; height: 20px; }
 .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-generate.busy svg { display: none; }
+
+/* State icons — shown via the button's data-icon attribute. */
+#preparing-icon, #recording-icon, #converting-icon, #download-icon { display: none; }
+.btn-generate[data-icon="preparing"] #preparing-icon,
+.btn-generate[data-icon="recording"] #recording-icon,
+.btn-generate[data-icon="converting"] #converting-icon,
+.btn-generate[data-icon="download"] #download-icon { display: block; }
+.btn-generate[data-icon="recording"] #recording-icon { color: #ff6b6b; }
+.btn-generate[data-icon="preparing"] #preparing-icon,
+.btn-generate[data-icon="converting"] #converting-icon { animation: genSpin 1.1s linear infinite; }
+@keyframes genSpin { to { transform: rotate(360deg); } }
 
 /* Progress fills the button itself with color. The button base is the theme's
    accent color, so the fill uses the button's text color as a translucent
@@ -930,14 +940,11 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 
 /* Ready = Download state. */
-#download-icon { display: none; }
 .btn-generate.ready {
   background-color: var(--success, #16a34a);
   background-image: linear-gradient(135deg, #34d399, #16a34a 55%, #15803d);
   box-shadow: 0 8px 24px -8px rgba(22, 163, 74, 0.6);
 }
-.btn-generate.ready #generate-icon { display: none; }
-.btn-generate.ready #download-icon { display: block; }
 .btn-generate.ready:hover:not(:disabled) {
   filter: brightness(1.08);
   transform: translateY(-1px);
