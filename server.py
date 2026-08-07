@@ -125,21 +125,10 @@ async def _send_discord_notification(export_id: str) -> None:
                     },
                     "title": "Video downloaded",
                     "description": "A voice-note video was exported and downloaded.",
-                    "thumbnail": {"url": f"{SITE_URL}/assets/insta-default.jpg"},
                     "fields": [
                         {
                             "name": "Export ID",
                             "value": f"`{export_id}`",
-                            "inline": True,
-                        },
-                        {
-                            "name": "Filename",
-                            "value": f"`{export_id}.mp4`",
-                            "inline": True,
-                        },
-                        {
-                            "name": "Studio",
-                            "value": f"[Open Insta Notes]({SITE_URL}/studio)",
                             "inline": True,
                         },
                     ],
