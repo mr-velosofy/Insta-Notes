@@ -273,7 +273,6 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   border-radius: 12px;
   background: conic-gradient(from 0deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75);
   filter: blur(14px);
-  animation: btnGradSpin 16s linear infinite;
   pointer-events: none;
 }
 
