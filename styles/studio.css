@@ -849,20 +849,22 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 #trim-wave.trim-wave-loading { opacity: 0; }
 #trim-wave.locked { opacity: 0.5; pointer-events: none; }
 
-/* Skeleton shown while the audio decodes / is restored from cache. */
+/* Skeleton shown while the audio decodes / is restored from cache. Bars are
+   sized in JS to mirror the trim wave geometry (bar = half the step width,
+   spaced with justify-content: space-between). */
 .trim-skeleton {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
   padding: 0 24px;
   overflow: hidden;
   pointer-events: none;
 }
 .trim-skeleton[hidden] { display: none; }
 .trim-skeleton i {
-  flex: 1;
+  flex: 0 0 auto;
   height: 36px;
   border-radius: 3px;
   background: linear-gradient(

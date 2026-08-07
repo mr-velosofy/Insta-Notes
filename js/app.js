@@ -96,13 +96,17 @@ function setTrimSkeleton(show) {
   els.trimWave.classList.toggle("trim-wave-loading", show);
 }
 
-/** (Re)build the skeleton bars at ~5px per bar, matching the trim wave count
- *  so it looks the same at every screen size. */
+/** (Re)build the skeleton bars to mirror the trim wave geometry exactly:
+ *  ~5px step, each bar half the step width, spread across the full width.
+ *  Flexbox distributes them identically to the canvas bars at any size. */
 function renderSkeletonBars() {
   const sk = els.trimSkeleton;
   if (!sk || !sk.dataset.ready) return;
-  const w = sk.clientWidth || 640;
-  sk.innerHTML = "<i></i>".repeat(Math.max(24, Math.floor(w / 5)));
+  const cs = getComputedStyle(sk);
+  const w = sk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const n = Math.max(24, Math.floor(w / 5));
+  const barW = Math.max(1, (w / n) * 0.5);
+  sk.innerHTML = new Array(n).fill("").map(() => `<i style="width:${barW}px"></i>`).join("");
 }
 
 /** Read a CSS custom property set by /js/theme.js, with a fallback. */
