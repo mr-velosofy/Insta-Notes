@@ -54,7 +54,6 @@ const els = {
   generateFill: document.getElementById("generate-fill"),
   generateLabel: document.getElementById("generate-label"),
   cancelBtn: document.getElementById("cancel-btn"),
-  reuseBtn: document.getElementById("reuse-btn"),
   resetBtn: document.getElementById("reset-btn"),
   statusDot: document.getElementById("status-dot"),
   statusText: document.getElementById("status-text"),
@@ -209,29 +208,50 @@ function setBusyWarning(show) {
 /** Show/hide the X button next to Generate while rendering. The width and
  *  opacity are transitioned in CSS so the row reflows smoothly. */
 function setCancelVisible(show) {
-  if (els.cancelBtn) els.cancelBtn.classList.toggle("show", show);
+  if (!els.cancelBtn) return;
+  els.cancelBtn.classList.toggle("show", show);
+  els.cancelBtn.classList.remove("undo");
+  els.cancelBtn.title = "Cancel generation";
 }
 
-/** Show/hide the "Download last" button next to Generate. It appears when a
- *  generated MP4 exists but the scene has changed (stale video) so the user
- *  can still grab the previous render without re-recording. */
-function setReuseVisible(show) {
-  if (els.reuseBtn) els.reuseBtn.classList.toggle("show", show);
+/** Show/hide the undo button (same slot as the cancel X) when a cached MP4
+ *  exists but the scene changed. Clicking it restores the Download state so
+ *  the last render can be downloaded without re-recording. */
+function setUndoVisible(show) {
+  if (!els.cancelBtn) return;
+  els.cancelBtn.classList.toggle("show", show);
+  els.cancelBtn.classList.toggle("undo", show);
+  els.cancelBtn.title = show
+    ? "Undo — restore the last generated video"
+    : "Cancel generation";
+  els.cancelBtn.setAttribute("aria-label", show ? "Undo — restore the last generated video" : "Cancel generation");
 }
 
-/** Keep the reuse button in sync with the cached MP4 and scene state. */
-function syncReuseButton() {
-  setReuseVisible(!!lastMp4 && !els.generateBtn.classList.contains("ready") && !busy);
+/** Single-slot button: cancel X while rendering, undo icon when a stale MP4
+ *  cache is available, nothing otherwise. */
+function updateSlotButton() {
+  setUndoVisible(!!lastMp4 && !els.generateBtn.classList.contains("ready") && !busy);
+  if (!busy) return;
+  setCancelVisible(true);
+}
+
+/** Restore the ready/Download state for the cached MP4 (undo). */
+function restoreGenerated() {
+  els.generateBtn.classList.add("ready");
+  if (!busy) setGenerateLabel("Download");
+  setProgress(null);
+  updateSlotButton();
+  setStatus("", "Previous video restored — press Download");
 }
 
 /** A change to the scene (trim / theme / avatar) makes the last MP4 stale.
- *  The blob stays cached until the tab refreshes so it can still be downloaded
- *  via the "Download last" button; only the ready state is lost. */
+ *  The blob stays cached until the tab refreshes so the undo button can bring
+ *  back the Download state; only the ready state is lost. */
 function invalidateGenerated() {
   els.generateBtn.classList.remove("ready");
   if (!busy) setGenerateLabel("Generate");
   setProgress(null);
-  syncReuseButton();
+  updateSlotButton();
 }
 
 const metrics = {
@@ -979,12 +999,12 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
       trim = { start: 0, end: Math.min(decoded.duration, MAX_DURATION) };
     }
 
-    // New audio means the previous generated MP4 is stale — reset it.
-    lastMp4 = null;
+    // A new source changes the scene: the previous MP4 becomes stale but stays
+    // cached (until the tab refreshes) so the undo button can restore it.
     els.generateBtn.classList.remove("ready");
     setGenerateLabel("Generate");
     setProgress(null);
-    syncReuseButton();
+    updateSlotButton();
     els.stepAudio.classList.add("done");
     els.stepTrim.classList.add("done");
     applyTrim();
@@ -1372,10 +1392,9 @@ async function runGenerate() {
   els.playBtn.disabled = true;
   els.generateBtn.classList.remove("ready");
   setBusyWarning(true);
-  setCancelVisible(true);
-  syncReuseButton();
+  updateSlotButton();
   // Keep any previously produced MP4 cached (now stale) so it stays
-  // downloadable via "Download last" if this generation is cancelled/fails.
+  // downloadable via undo if this generation is cancelled/fails.
   setGenerateLabel("Preparing…");
   setStatus("", "Preparing recorder…");
 
@@ -1448,7 +1467,6 @@ async function runGenerate() {
     setProgress(100);
     els.generateBtn.classList.add("ready");
     setGenerateLabel("Download");
-    syncReuseButton();
     setStatus("", "MP4 ready — press Download");
     setTimeout(() => setProgress(null), 800);
   } catch (err) {
@@ -1464,12 +1482,11 @@ async function runGenerate() {
     cancelRequested = false;
     setBusyWarning(false);
     setProgress(null);
-    setCancelVisible(false);
     setControlsLocked(false);
     els.generateBtn.disabled = false;
     els.playBtn.disabled = false;
     if (!lastMp4) setGenerateLabel("Generate");
-    syncReuseButton();
+    updateSlotButton();
     setPlayLabel(false);
   }
 }
@@ -1546,12 +1563,11 @@ function wire() {
     }
   });
   els.cancelBtn.addEventListener("click", () => {
-    cancelRequested = true;
-  });
-  els.reuseBtn.addEventListener("click", () => {
-    if (lastMp4) {
-      Recorder.download(lastMp4, "insta-notes.mp4");
-      showToast("Downloaded the video from previous settings.");
+    if (busy) {
+      cancelRequested = true;
+    } else if (lastMp4 && !els.generateBtn.classList.contains("ready")) {
+      // Undo: restore the Download state for the cached MP4.
+      restoreGenerated();
     }
   });
   els.uploadBtn.addEventListener("click", () => els.audioInput.click());
