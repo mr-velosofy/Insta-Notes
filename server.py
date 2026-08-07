@@ -30,6 +30,16 @@ def studio() -> Response:
     return FileResponse(TEMPLATES_DIR / "studio.html")
 
 
+@app.get("/privacy", include_in_schema=False)
+def privacy() -> Response:
+    return FileResponse(TEMPLATES_DIR / "privacy.html")
+
+
+@app.get("/terms", include_in_schema=False)
+def terms() -> Response:
+    return FileResponse(TEMPLATES_DIR / "terms.html")
+
+
 if __name__ == "__main__":
     import uvicorn
 

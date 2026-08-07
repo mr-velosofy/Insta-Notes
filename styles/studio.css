@@ -703,6 +703,14 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   display: inline-block;
 }
 
+.footer-links {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  justify-content: center;
+}
+.footer-links a { transition: color 0.2s; }
+.footer-links a:hover { color: var(--text-main); }
 /* --- Live Preview Panel --- */
 .preview-container {
   border: 1px solid var(--panel-border);
