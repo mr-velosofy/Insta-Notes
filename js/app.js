@@ -1035,10 +1035,6 @@ function stopRecording() {
   }
 }
 
-function stopMicStream(stream) {
-  (stream.getTracks() || []).forEach((t) => t.stop());
-}
-
 async function handleAudioUpload(file) {
   if (!file) return;
   setStatus("", "Decoding audio…");
