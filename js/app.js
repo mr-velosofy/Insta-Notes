@@ -41,6 +41,7 @@ const els = {
   activeFile: document.getElementById("active-file"),
   fileRemove: document.getElementById("file-remove"),
   trimWave: document.getElementById("trim-wave"),
+  trimSkeleton: document.getElementById("trim-skeleton"),
   trimSelected: document.getElementById("trim-duration-selected"),
   trimStart: document.getElementById("trim-start"),
   trimEnd: document.getElementById("trim-end"),
@@ -78,6 +79,17 @@ function showToast(msg) {
   els.toast.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => els.toast.classList.remove("show"), 4000);
+}
+
+/** Toggle the skeleton shimmer over the trim wave while audio loads. */
+function setTrimSkeleton(show) {
+  const sk = els.trimSkeleton;
+  if (!sk) return;
+  if (show && !sk.dataset.ready) {
+    sk.dataset.ready = "1";
+    sk.innerHTML = "<i></i>".repeat(32);
+  }
+  sk.hidden = !show;
 }
 
 /** Read a CSS custom property set by /js/theme.js, with a fallback. */
@@ -758,6 +770,7 @@ async function decodeBlob(blob) {
 }
 
 async function loadSourceFromBlob(blob, name, restoreTrim = null) {
+  setTrimSkeleton(true);
   try {
     const decoded = await decodeBlob(blob);
 
@@ -795,6 +808,8 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
   } catch (err) {
     console.error(err);
     setStatus("", `Audio error: ${err.message}`);
+  } finally {
+    setTrimSkeleton(false);
   }
 }
 

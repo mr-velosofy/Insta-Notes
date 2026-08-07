@@ -656,8 +656,8 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   overflow: hidden;
 }
 .file-info { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 0; overflow: hidden; }
-.file-icon { color: var(--text-muted); flex-shrink: 0; }
-.file-icon svg { width: 20px; height: 20px; }
+.file-icon { color: var(--text-muted); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.file-icon svg { width: 20px; height: 20px; display: block; }
 .file-name {
   font-size: 0.875rem;
   font-weight: 500;
@@ -803,6 +803,39 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   touch-action: none;
 }
 #trim-wave.locked { opacity: 0.5; pointer-events: none; }
+
+/* Skeleton shown while the audio decodes / is restored from cache. */
+.trim-skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 24px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.trim-skeleton i {
+  flex: 1;
+  height: 36px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--btn-bg-light) 25%,
+    var(--panel-border) 37%,
+    var(--btn-bg-light) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+}
+.trim-skeleton i:nth-child(2n) { height: 24px; }
+.trim-skeleton i:nth-child(3n) { height: 46px; }
+.trim-skeleton i:nth-child(5n) { height: 30px; }
+
+@keyframes skeletonShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
 
 .trim-inputs {
   display: flex;
@@ -1019,6 +1052,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .busy-warning { transition: none; }
+  .trim-skeleton i { animation: none; }
 }
 
 #status-dot {
