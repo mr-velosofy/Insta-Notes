@@ -148,12 +148,21 @@ function setPlayLabel(playing) {
   els.playBtn.setAttribute("aria-label", playing ? "Pause preview" : "Play preview");
 }
 
-/** Toggle the record action-card title between record / stop and give the
- *  card a distinct "recording" look (red ring + pulsing dot). */
+/** Toggle the record action-card title between record / stop, swap the
+ *  description for the live timer, and give the card a distinct "recording"
+ *  look (red ring + pulsing dot). */
 function setRecordLabel(recording) {
   const title = els.recordBtn.querySelector(".action-title");
   if (title) title.textContent = recording ? "Stop Recording" : "Record Voice Note";
+  const desc = els.recordBtn.querySelector(".action-desc");
+  if (desc) desc.textContent = recording ? "Recording… 0:00" : "Record directly";
   els.recordBtn.classList.toggle("recording", recording);
+}
+
+/** Update the live elapsed-time on the record button while recording. */
+function setRecordTimer(secs) {
+  const desc = els.recordBtn.querySelector(".action-desc");
+  if (desc) desc.textContent = `Recording… ${fmtTime(secs)}`;
 }
 
 /**
@@ -970,13 +979,21 @@ async function toggleRecord() {
       clearInterval(micRec && micRec.timer);
       micRec = null;
       setRecordLabel(false);
+      setControlsLocked(false);
+      els.generateBtn.disabled = false;
       setStatus("", "Processing recording…");
       loadSourceFromBlob(blob, "Voice note");
     };
+    // Lock everything (avatar, theme, audio source, trim, preview, generate)
+    // while the voice note is being captured.
+    setControlsLocked(true);
+    els.recordBtn.disabled = false;
+    els.generateBtn.disabled = true;
     recorder.start();
     const startTime = Date.now();
     const timer = setInterval(() => {
       const el = (Date.now() - startTime) / 1000;
+      setRecordTimer(el);
       setStatus("recording", `Recording… ${fmtTime(el)} (max ${MAX_SOURCE_LABEL})`);
       if (el >= MAX_SOURCE_DURATION) {
         showToast(`Recording reached the ${MAX_SOURCE_LABEL} limit.`);
