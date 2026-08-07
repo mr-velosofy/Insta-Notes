@@ -17,8 +17,8 @@
   --btn-primary-bg: #111111;
   --btn-primary-fg: #ffffff;
   --btn-primary-hover: #000000;
-  --cta-bg: #111111;
-  --cta-text: #ffffff;
+  --cta-bg: #ffffff;
+  --cta-text: #111827;
   --cta-glow: rgba(249, 115, 22, 0.25);
   --step-line: #e5e7eb;
   --trim-dim: rgba(17, 24, 39, 0.12);
@@ -629,6 +629,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   margin-bottom: 72px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 .final-cta::before {
   content: "";
@@ -649,7 +650,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   position: relative;
 }
 .final-cta p {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-muted);
   font-size: 1.0625rem;
   max-width: 480px;
   margin: 0 auto 32px;

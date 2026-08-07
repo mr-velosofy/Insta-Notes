@@ -124,8 +124,8 @@
     set("--btn-primary-bg", btnPrimaryBg);
     set("--btn-primary-fg", WHITE);
     set("--btn-primary-hover", btnPrimaryHover);
-    set("--cta-bg", dark ? "#1a1d24" : "#111111");
-    set("--cta-text", WHITE);
+    set("--cta-bg", dark ? "#1a1d24" : "#ffffff");
+    set("--cta-text", dark ? WHITE : "#111827");
     set("--cta-glow", rgba(ACCENT, 0.25));
     set("--step-line", dark ? "rgba(255,255,255,0.14)" : "#e5e7eb");
     set("--trim-dim", dark ? "rgba(255,255,255,0.15)" : "rgba(17,24,39,0.12)");
