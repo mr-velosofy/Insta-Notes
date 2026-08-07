@@ -235,6 +235,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   gap: 10px;
   background-color: var(--btn-primary-bg, #111);
   background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
+  background-size: 200% 100%;
   color: var(--btn-primary-fg, white);
   padding: 14px 28px;
   border-radius: 12px;
@@ -242,16 +243,23 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   font-weight: 700;
   box-shadow: var(--shadow-md);
   transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  animation: btnGradSlide 4s linear infinite;
 }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
 /* Hero "Start Creating" — a soft accent glow whose opacity gently pulses.
    The button and its text stay perfectly still. */
-.hero .btn-primary { animation: heroCtaPulse 2.2s ease-in-out infinite; }
+.hero .btn-primary { animation: heroCtaPulse 2.2s ease-in-out infinite, btnGradSlide 4s linear infinite; }
 @keyframes heroCtaPulse {
   0%, 100% { box-shadow: var(--shadow-md), 0 0 22px -2px color-mix(in srgb, var(--btn-primary-bg, #111) 15%, transparent); }
   50% { box-shadow: var(--shadow-md), 0 0 38px 0 color-mix(in srgb, var(--btn-primary-bg, #111) 45%, transparent); }
+}
+/* Gradient slides left one full tile width (background-size 200%) so the
+   loop restarts seamlessly — same motion as the mr.velosofy byline. */
+@keyframes btnGradSlide {
+  from { background-position: 0% 0; }
+  to { background-position: -200% 0; }
 }
 
 .btn-secondary-link {
