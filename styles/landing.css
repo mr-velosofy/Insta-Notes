@@ -262,22 +262,21 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
-/* "Start Creating": each character eases its slant (Inter variable slnt axis)
-   upright -> italic -> upright. The per-char animation-delay (--i) staggers
-   the wave so the slant travels continuously across the label — a true
-   per-frame morph, not a font-style switch. */
+/* "Start Creating": each character eases its skew upright -> italic -> upright.
+   The per-char animation-delay (--i) staggers the wave so the slant travels
+   continuously across the label. transform animates on the compositor in every
+   browser (the variable slnt axis would be ignored on Inter's roman face). */
 .wave-char {
   display: inline-block;
   white-space: pre;
-  font-style: normal;
-  font-variation-settings: "wght" 700, "slnt" 0;
+  will-change: transform;
   animation: charWave 3.2s ease-in-out infinite;
   animation-delay: calc(var(--i) * 110ms);
 }
 @keyframes charWave {
-  0%   { font-variation-settings: "wght" 700, "slnt" 0; }
-  50%  { font-variation-settings: "wght" 700, "slnt" -10; }
-  100% { font-variation-settings: "wght" 700, "slnt" 0; }
+  0%   { transform: skewX(0deg); }
+  50%  { transform: skewX(-10deg); }
+  100% { transform: skewX(0deg); }
 }
 
 /* Hero "Start Creating" — no glow, plain button. */
