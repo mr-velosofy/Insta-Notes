@@ -285,6 +285,7 @@ let busy = false;
 let cancelRequested = false;
 let currentDuration = DURATION;
 let lastMp4 = null;
+let lastExportId = null; // single-use server-minted ID for the current MP4
 let fileName = "demo.mp3";
 
 // Full decoded audio (up to MAX_SOURCE_DURATION) + the active trim range.
@@ -1498,6 +1499,20 @@ async function runGenerate() {
     metrics.record("MP4 file size", `${(mp4Blob.size / 1024 / 1024).toFixed(2)} MB`);
     lastMp4 = mp4Blob;
 
+    // Mint a single-use export ID (also used as the download filename). Pure
+    // enrichment: if this fails the download still works with the default
+    // name and no Discord notification is attempted.
+    lastExportId = null;
+    try {
+      const claim = await fetch("/api/claim-export", { method: "POST" });
+      if (claim.ok) {
+        const body = await claim.json().catch(() => null);
+        if (body && body.id) lastExportId = body.id;
+      }
+    } catch (err) {
+      // Offline or server hiccup — fall back to the default filename.
+    }
+
     setProgress(100);
     els.generateBtn.classList.add("ready");
     setGenerateLabel("Download");
@@ -1532,12 +1547,20 @@ async function runGenerate() {
 
 async function runConvert() {
   if (!lastMp4) return;
-  Recorder.download(lastMp4, "insta-notes.mp4");
+  const name = lastExportId ? `${lastExportId}.mp4` : "insta-notes.mp4";
+  Recorder.download(lastMp4, name);
   setStatus("exported", "Downloaded insta-notes.mp4");
   // Tell the server a download happened so it can post a Discord webhook.
-  // The webhook URL stays server-side (.env); the frontend only sends a
-  // bodyless POST and never sees any configuration.
-  fetch("/api/notify-download", { method: "POST", keepalive: true }).catch(() => {});
+  // The webhook URL stays server-side (.env); the frontend only sends the
+  // single-use export ID, which the server validates and consumes.
+  if (lastExportId) {
+    fetch("/api/notify-download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lastExportId }),
+      keepalive: true,
+    }).catch(() => {});
+  }
 }
 
 function metricRecordAll(blob, startupMs, exportMs) {
