@@ -460,7 +460,9 @@ function updateTrimUI() {
 }
 
 /* --- trim waveform + drag handles (pointer events: mouse + touch) --- */
-const TRIM_BARS = 64;
+// Envelope is computed at a fixed high resolution; the bar count is derived
+// from the canvas width at draw time (see drawTrimWave).
+const TRIM_BARS = 256;
 const INSTA_GRADIENT_STOPS = ["#feda75", "#fa7e1e", "#d62976", "#962fbf", "#4f5bd5"];
 
 function drawTrimWave() {
@@ -483,7 +485,12 @@ function drawTrimWave() {
   const sX = padL + (trim.start / total) * innerW;
   const eX = padL + (trim.end / total) * innerW;
 
-  const n = sourceEnvelope.length || TRIM_BARS;
+  // Bar count adapts to the available width (~5px per bar) so bars stay slim
+  // on wide screens; mobile keeps roughly today's count. Aggregated down from
+  // the high-res envelope.
+  const envLen = sourceEnvelope.length || TRIM_BARS;
+  const n = Math.max(24, Math.min(envLen, Math.floor(innerW / 5)));
+  const envPerBar = envLen / n;
   const step = innerW / n;
   const barW = Math.max(1, step * 0.5);
   const ctxBars = ctx;
@@ -494,7 +501,11 @@ function drawTrimWave() {
   for (let i = 0; i < n; i++) {
     const frac = (i + 0.5) / n;
     const x = padL + i * step + (step - barW) / 2;
-    const amp = sourceEnvelope[i] || 0.3;
+    let ampSum = 0;
+    const s0 = Math.floor(i * envPerBar);
+    const s1 = Math.max(s0 + 1, Math.floor((i + 1) * envPerBar));
+    for (let j = s0; j < s1; j++) ampSum += sourceEnvelope[j] || 0;
+    const amp = s1 > s0 ? ampSum / (s1 - s0) : 0.3;
     const h = Math.max(3, amp * maxH);
     const y = center - h / 2;
     const selected = frac >= trim.start / total && frac <= trim.end / total;
@@ -854,7 +865,7 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
   try {
     if (await probeTooLong(blob)) {
       setStatus("", `Audio is too long — max ${MAX_SOURCE_LABEL}`);
-      showToast(`Audio is longer than ${MAX_SOURCE_LABEL}. Please use a shorter file.`);
+      showToast(`Audio is longer than ${MAX_SOURCE_LABEL}.`);
       return;
     }
 
@@ -863,7 +874,7 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
     // Backstop: the metadata probe can misreport for some containers.
     if (decoded.duration > MAX_SOURCE_DURATION + 0.5) {
       setStatus("", `Audio is too long — max ${MAX_SOURCE_LABEL}`);
-      showToast(`Audio is longer than ${MAX_SOURCE_LABEL}. Please use a shorter file.`);
+      showToast(`Audio is longer than ${MAX_SOURCE_LABEL}.`);
       return;
     }
     sourceBlob = blob;
@@ -1418,6 +1429,11 @@ function wire() {
   els.trimWave.addEventListener("pointermove", onTrimPointerMove);
   els.trimWave.addEventListener("pointerup", onTrimPointerUp);
   els.trimWave.addEventListener("pointercancel", onTrimPointerUp);
+
+  // Redraw at the new bar count when the window resizes.
+  window.addEventListener("resize", () => {
+    if (sourceBuffer) drawTrimWave();
+  });
 
   wireAvatar();
   buildThemePicker();
