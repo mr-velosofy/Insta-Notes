@@ -68,7 +68,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   top: 0;
   z-index: 50;
   margin: 0 -24px;
-  background: color-mix(in srgb, var(--bg-body) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-body) 30%, transparent);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);
   border-bottom: 1px solid var(--border-color);
