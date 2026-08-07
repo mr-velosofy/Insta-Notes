@@ -261,17 +261,22 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
-/* Hero "Start Creating" — a real gradient glow: a second conic blob (same
-   gradient, same 16s rotation) blurred and spread around the button, so the
-   glow color at each edge matches the blob color at that edge. */
+/* Hero "Start Creating" — a thin gradient ring hugging the button border.
+   Same conic gradient, same 16s rotation as the blob, masked so only a few
+   pixels around the edge are visible. */
 .btn-glow-wrap { position: relative; display: inline-block; }
 .btn-glow-wrap::before {
   content: "";
   position: absolute;
-  inset: -30%;
+  inset: -4px;
   z-index: -1;
+  border-radius: 16px;
+  padding: 4px;
   background: conic-gradient(from 0deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75);
-  filter: blur(20px);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
   animation: btnGradSpin 16s linear infinite;
   pointer-events: none;
 }
