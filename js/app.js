@@ -88,12 +88,14 @@ function showToast(msg) {
 function setTrimSkeleton(show) {
   const sk = els.trimSkeleton;
   if (!sk) return;
+  // Unhide first so getBoundingClientRect() inside renderSkeletonBars() reads
+  // real layout (a display:none element measures 0 and would misplace bars).
+  sk.hidden = !show;
+  els.trimWave.classList.toggle("trim-wave-loading", show);
   if (show && !sk.dataset.ready) {
     sk.dataset.ready = "1";
     renderSkeletonBars();
   }
-  sk.hidden = !show;
-  els.trimWave.classList.toggle("trim-wave-loading", show);
 }
 
 /** (Re)build the skeleton bars using the exact same geometry as
