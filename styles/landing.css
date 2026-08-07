@@ -271,9 +271,15 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   inset: 0;
   z-index: -1;
   border-radius: 12px;
-  background: conic-gradient(from 0deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75);
+  background-image: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75);
+  background-size: 200% 100%;
   filter: blur(14px);
+  animation: btnGlowSlide 16s linear infinite;
   pointer-events: none;
+}
+@keyframes btnGlowSlide {
+  from { background-position: 0% 0; }
+  to { background-position: -200% 0; }
 }
 
 .btn-secondary-link {
