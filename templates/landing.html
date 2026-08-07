@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insta Notes — Turn voice notes into beautiful videos</title>
-    <meta name="description" content="Turn voice notes into beautiful animated videos — entirely in your browser. Private, free, no upload." />
-    <link rel="canonical" href="https://insta-notes.onrender.com/" />
+    <meta name="description" content="Turn voice notes into beautiful animated videos — free and 100% private. No upload, no sign-up: record or drop an audio file and generate right in your browser." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <!-- Search console verification — uncomment and fill in once you own the property:
+    <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE" />
+    <meta name="msvalidate.01" content="YOUR_BING_VERIFICATION_CODE" />
+    -->
+    <link rel="canonical" href="{{ SITE_URL }}/" />
     <meta property="og:site_name" content="Insta Notes" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Insta Notes — Turn voice notes into beautiful videos" />
-    <meta property="og:description" content="Turn voice notes into beautiful animated videos — entirely in your browser. Private, free, no upload." />
-    <meta property="og:url" content="https://insta-notes.onrender.com/" />
-    <meta property="og:image" content="https://insta-notes.onrender.com/assets/og-image-v3.png" />
-    <meta property="og:image:secure_url" content="https://insta-notes.onrender.com/assets/og-image-v3.png" />
+    <meta property="og:description" content="Turn voice notes into beautiful animated videos — free and 100% private. No upload, no sign-up: record or drop an audio file and generate right in your browser." />
+    <meta property="og:url" content="{{ SITE_URL }}/" />
+    <meta property="og:image" content="{{ SITE_URL }}/assets/og-image-v3.png" />
+    <meta property="og:image:secure_url" content="{{ SITE_URL }}/assets/og-image-v3.png" />
     <meta property="og:image:width" content="1600" />
     <meta property="og:image:height" content="900" />
     <meta property="og:image:type" content="image/png" />
@@ -20,8 +25,95 @@
     <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Insta Notes — Turn voice notes into beautiful videos" />
-    <meta name="twitter:description" content="Turn voice notes into beautiful animated videos — entirely in your browser. Private, free, no upload." />
-    <meta name="twitter:image" content="https://insta-notes.onrender.com/assets/og-image-v3.png" />
+    <meta name="twitter:description" content="Turn voice notes into beautiful animated videos — free and 100% private. No upload, no sign-up: record or drop an audio file and generate right in your browser." />
+    <meta name="twitter:image" content="{{ SITE_URL }}/assets/og-image-v3.png" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "{{ SITE_URL }}/#website",
+          "url": "{{ SITE_URL }}/",
+          "name": "Insta Notes",
+          "description": "Turn voice notes into beautiful animated videos entirely in your browser - private, free, no upload.",
+          "inLanguage": "en",
+          "publisher": {
+            "@type": "Organization",
+            "@id": "{{ SITE_URL }}/#organization",
+            "name": "Insta Notes",
+            "url": "{{ SITE_URL }}/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "{{ SITE_URL }}/assets/icons/favicon/favicon-192x192.png"
+            }
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "{{ SITE_URL }}/#webpage",
+          "url": "{{ SITE_URL }}/",
+          "name": "Insta Notes - Turn voice notes into beautiful videos",
+          "description": "Turn voice notes into beautiful animated videos entirely in your browser - private, free, no upload.",
+          "isPartOf": { "@id": "{{ SITE_URL }}/#website" },
+          "inLanguage": "en",
+          "primaryImageOfPage": {
+            "@type": "ImageObject",
+            "url": "{{ SITE_URL }}/assets/og-image-v3.png"
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Insta Notes",
+          "url": "{{ SITE_URL }}/",
+          "applicationCategory": "MultimediaApplication",
+          "operatingSystem": "Web",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "description": "Turn voice notes into beautiful animated videos entirely in your browser - private, free, no upload."
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "{{ SITE_URL }}/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Do I need an account?",
+              "acceptedAnswer": { "@type": "Answer", "text": "No. There are no accounts, no logins, and no data leaves your browser. Just open the studio and start creating." }
+            },
+            {
+              "@type": "Question",
+              "name": "Where is my audio uploaded?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Nowhere. Recording, editing, and rendering all happen on your device. Close the tab and everything is gone." }
+            },
+            {
+              "@type": "Question",
+              "name": "What formats are supported?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Upload MP3, WAV, M4A or OGG audio, or record straight from your microphone. Export your video as MP4." }
+            },
+            {
+              "@type": "Question",
+              "name": "Is there a length limit?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Upload or record up to 10 minutes of audio, then export your favorite 3-minute window as a shareable video." }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I use my own photo as the avatar?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes - drop any image onto the preview or use the built-in picker. The avatar is rendered right into your exported video." }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it work offline?",
+              "acceptedAnswer": { "@type": "Answer", "text": "The app itself runs entirely in your browser. Only the Inter font is loaded from Google's CDN; everything else is local." }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
     <meta name="theme-color" content="#d62976" />
     <link rel="icon" type="image/x-icon" href="/assets/icons/favicon/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon/favicon-16x16.png" />

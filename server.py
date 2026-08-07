@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import httpx
 
@@ -21,9 +22,17 @@ BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
-# Public site URL, used only for Discord embed links/images. Render sets
-# RENDER_EXTERNAL_URL for web services; local runs fall back to the live URL.
-SITE_URL = os.getenv("RENDER_EXTERNAL_URL", "https://insta-notes.onrender.com").rstrip("/")
+# Public site URL — one place to change if the domain moves. Explicit SITE_URL
+# wins, then Render's auto-detected public URL, then the current live URL.
+# Used by the Discord embed, robots.txt, sitemap.xml, and every template's
+# canonical/Open Graph tags via the {{ SITE_URL }} Jinja global.
+SITE_URL = os.getenv("SITE_URL", os.getenv("RENDER_EXTERNAL_URL", "https://insta-notes.onrender.com")).rstrip("/")
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates.env.globals["SITE_URL"] = SITE_URL
+
+# lastmod value shared by sitemap entries (deploy date).
+SITEMAP_LASTMOD = datetime.now(timezone.utc).date().isoformat()
 
 # --- Single-use export IDs ---------------------------------------------------
 # When a video finishes converting, the server mints an 11-character ID
@@ -179,27 +188,60 @@ async def notify_download(request: Request, event: DownloadEvent) -> Response:
 
 
 @app.get("/", include_in_schema=False)
-def index() -> Response:
-    return FileResponse(TEMPLATES_DIR / "landing.html")
+def index(request: Request) -> Response:
+    return templates.TemplateResponse(request, "landing.html")
 
 @app.get("/home", include_in_schema=False)
-def index_2() -> Response:
-    return FileResponse(TEMPLATES_DIR / "landing.html")
+def index_2(request: Request) -> Response:
+    return templates.TemplateResponse(request, "landing.html")
 
 
 @app.get("/studio", include_in_schema=False)
-def studio() -> Response:
-    return FileResponse(TEMPLATES_DIR / "studio.html")
+def studio(request: Request) -> Response:
+    return templates.TemplateResponse(request, "studio.html")
 
 
 @app.get("/privacy", include_in_schema=False)
-def privacy() -> Response:
-    return FileResponse(TEMPLATES_DIR / "privacy.html")
+def privacy(request: Request) -> Response:
+    return templates.TemplateResponse(request, "privacy.html")
 
 
 @app.get("/terms", include_in_schema=False)
-def terms() -> Response:
-    return FileResponse(TEMPLATES_DIR / "terms.html")
+def terms(request: Request) -> Response:
+    return templates.TemplateResponse(request, "terms.html")
+
+
+ROBOTS_TXT = (
+    "User-agent: *\n"
+    "Allow: /\n"
+    "\n"
+    f"Sitemap: {SITE_URL}/sitemap.xml\n"
+)
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots() -> Response:
+    return Response(ROBOTS_TXT, media_type="text/plain")
+
+
+SITEMAP_XML = (
+    '<?xml version="1.0" encoding="UTF-8"?>\n'
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    f'  <url><loc>{SITE_URL}/</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
+    "<changefreq>weekly</changefreq><priority>1.0</priority></url>\n"
+    f'  <url><loc>{SITE_URL}/studio</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
+    "<changefreq>weekly</changefreq><priority>0.9</priority></url>\n"
+    f'  <url><loc>{SITE_URL}/privacy</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
+    "<changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
+    f'  <url><loc>{SITE_URL}/terms</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
+    "<changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
+    "</urlset>\n"
+)
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap() -> Response:
+    return Response(SITEMAP_XML, media_type="application/xml")
 
 
 if __name__ == "__main__":
