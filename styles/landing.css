@@ -234,7 +234,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   align-items: center;
   gap: 10px;
   background-color: var(--btn-primary-bg, #111);
-  background-image: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #4f8fd5, #2dd4bf, #a8e6cf, #d4e157, #feda75);
+  background-image: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75);
   background-size: 200% 100%;
   color: var(--btn-primary-fg, white);
   padding: 14px 28px;
@@ -665,7 +665,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   position: relative;
 }
 .final-cta .btn-primary {
-  background-image: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #4f8fd5, #2dd4bf, #a8e6cf, #d4e157, #feda75);
+  background-image: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75);
   color: var(--btn-primary-fg, #fff);
 }
 .final-cta .btn-primary:hover { background-color: var(--btn-primary-hover, #ea580c); filter: brightness(1.08); }
