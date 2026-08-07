@@ -1,3 +1,16 @@
+/* Visually hidden but present for screen readers and SEO. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :root {
   /* Colors matching the landing page — default fallbacks; theme.js overrides
      these live via inline custom properties using the studio's saved theme. */

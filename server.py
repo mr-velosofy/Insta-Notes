@@ -229,6 +229,8 @@ SITEMAP_XML = (
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     f'  <url><loc>{SITE_URL}/</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
     "<changefreq>weekly</changefreq><priority>1.0</priority></url>\n"
+    f'  <url><loc>{SITE_URL}/home</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
+    "<changefreq>weekly</changefreq><priority>0.9</priority></url>\n"
     f'  <url><loc>{SITE_URL}/studio</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
     "<changefreq>weekly</changefreq><priority>0.9</priority></url>\n"
     f'  <url><loc>{SITE_URL}/privacy</loc><lastmod>{SITEMAP_LASTMOD}</lastmod>'
