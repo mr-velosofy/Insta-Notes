@@ -1368,8 +1368,13 @@ async function playPreview() {
     setSourceLocked(false);
     setPlayLabel(false);
     setStatus("", "Preview paused");
-  } else if (preview.timeline.elapsed >= preview.timeline.duration) {
-    // Finished previously — restart from the beginning.
+  } else if (
+    preview.timeline.elapsed >= preview.timeline.duration ||
+    preview.timeline.elapsed <= 0
+  ) {
+    // Finished previously, or stopped at the very start (e.g. after a
+    // cancelled generation) — restart cleanly from the beginning. The audio
+    // element would otherwise keep its stale mid-file position.
     preview.play();
     setSourceLocked(true);
     setPlayLabel(true);
