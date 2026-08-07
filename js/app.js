@@ -107,21 +107,25 @@ function renderSkeletonBars() {
   const bw = canvas.clientWidth || 640;
   const padL = 6, padR = 6;
   const innerW = bw - padL - padR;
-  const n = Math.max(24, Math.min(TRIM_BARS, Math.floor(innerW / 6)));
-  const step = innerW / n;
-  const barW = Math.max(1, step * 0.6);
+
+  // Fixed bar thickness + consistent gap everywhere: 4px bars on an 8px pitch.
+  const BAR_W = 4;
+  const PITCH = 8;
+  const n = Math.max(24, Math.min(TRIM_BARS, Math.floor(innerW / PITCH)));
+  const totalW = (n - 1) * PITCH + BAR_W;
 
   // The canvas starts after the container's padding; shift the skeleton bars
   // by the same amount so they line up with the drawn bars exactly.
   const skRect = sk.getBoundingClientRect();
   const cvRect = canvas.getBoundingClientRect();
   const offsetX = skRect.width ? cvRect.left - skRect.left : 0;
+  const startX = padL + (innerW - totalW) / 2;
 
   let html = "";
   for (let i = 0; i < n; i++) {
-    const x = offsetX + padL + i * step + (step - barW) / 2;
+    const x = startX + i * PITCH;
     const h = 12 + Math.random() * 36;
-    html += `<i style="left:${x.toFixed(1)}px;width:${barW.toFixed(1)}px;height:${h.toFixed(0)}px"></i>`;
+    html += `<i style="left:${(offsetX + x).toFixed(1)}px;width:${BAR_W}px;height:${h.toFixed(0)}px"></i>`;
   }
   sk.innerHTML = html;
 }
