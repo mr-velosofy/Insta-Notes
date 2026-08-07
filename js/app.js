@@ -52,6 +52,7 @@ const els = {
   generateBtn: document.getElementById("generate-btn"),
   generateFill: document.getElementById("generate-fill"),
   generateLabel: document.getElementById("generate-label"),
+  cancelBtn: document.getElementById("cancel-btn"),
   resetBtn: document.getElementById("reset-btn"),
   statusDot: document.getElementById("status-dot"),
   statusText: document.getElementById("status-text"),
@@ -156,6 +157,11 @@ function setBusyWarning(show) {
   if (els.busyWarning) els.busyWarning.classList.toggle("busy-warning-visible", show);
 }
 
+/** Show/hide the X button next to Generate while rendering. */
+function setCancelVisible(show) {
+  if (els.cancelBtn) els.cancelBtn.hidden = !show;
+}
+
 /** A change to the scene (trim / theme / avatar) invalidates the last MP4. */
 function invalidateGenerated() {
   lastMp4 = null;
@@ -184,6 +190,7 @@ const metrics = {
 let preview;
 let recorder;
 let busy = false;
+let cancelRequested = false;
 let currentDuration = DURATION;
 let lastMp4 = null;
 let fileName = "demo.mp3";
@@ -304,6 +311,38 @@ function audioVolumeEnvelope(buffer, buckets) {
   return data.map((v) => 0.06 + 0.94 * Math.min(v / peak, 1));
 }
 
+/** Chunked variant of audioVolumeEnvelope: yields to the event loop every few
+ *  buckets so the UI (e.g. the skeleton shimmer) stays responsive on long
+ *  sources instead of freezing during the full pass. */
+async function audioVolumeEnvelopeAsync(buffer, buckets) {
+  const ch = buffer.numberOfChannels;
+  const len = buffer.length;
+  const per = len / buckets;
+  const data = new Array(buckets).fill(0);
+
+  for (let i = 0; i < buckets; i++) {
+    if (i % 8 === 0) await new Promise((r) => setTimeout(r, 0));
+    const s0 = Math.floor(i * per);
+    const s1 = Math.max(s0 + 1, Math.floor((i + 1) * per));
+    let sum = 0, count = 0;
+    for (let c = 0; c < ch; c++) {
+      const arr = buffer.getChannelData(c);
+      for (let s = s0; s < s1; s++) {
+        const v = arr[s];
+        sum += v * v;
+        count++;
+      }
+    }
+    data[i] = Math.sqrt(sum / count);
+  }
+
+  let peak = 0;
+  for (const v of data) if (v > peak) peak = v;
+  if (peak <= 0) peak = 1;
+
+  return data.map((v) => 0.06 + 0.94 * Math.min(v / peak, 1));
+}
+
 /** Shared AudioContext for creating AudioBuffers (avoid context limits). */
 let sharedCtx = null;
 function bufferCtx() {
@@ -312,6 +351,14 @@ function bufferCtx() {
     sharedCtx = new Ctx();
   }
   return sharedCtx;
+}
+
+/** Offline context used only for decoding: decodeAudioData runs off the main
+ *  thread here, keeping the UI (skeleton shimmer, etc.) smooth on long files. */
+let offlineDecodeCtx = null;
+function offlineDecode() {
+  if (!offlineDecodeCtx) offlineDecodeCtx = new OfflineAudioContext(1, 1, 44100);
+  return offlineDecodeCtx;
 }
 
 /** Return a copy of `buffer` covering [startSec, endSec]. */
@@ -766,7 +813,7 @@ function wireAvatar() {
    ------------------------------------------------------------------ */
 async function decodeBlob(blob) {
   const arrayBuf = await blob.arrayBuffer();
-  return bufferCtx().decodeAudioData(arrayBuf);
+  return offlineDecode().decodeAudioData(arrayBuf);
 }
 
 async function loadSourceFromBlob(blob, name, restoreTrim = null) {
@@ -785,7 +832,7 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
     // Files up to MAX_SOURCE_DURATION load in full; the trim window caps the
     // export length at MAX_DURATION.
     sourceBuffer = decoded;
-    sourceEnvelope = audioVolumeEnvelope(sourceBuffer, TRIM_BARS);
+    sourceEnvelope = await audioVolumeEnvelopeAsync(sourceBuffer, TRIM_BARS);
 
     if (restoreTrim && restoreTrim.end > 0) {
       trim = {
@@ -975,7 +1022,20 @@ async function convertToMp4(webmBlob) {
   const { fetchFile } = mods[1];
 
   const ffmpeg = new FFmpeg();
+  const checkCancel = () => {
+    if (cancelRequested) {
+      try { ffmpeg.terminate(); } catch (_) {}
+      throw new Error("Cancelled");
+    }
+  };
+  checkCancel();
+
   ffmpeg.on("log", ({ message }) => {
+    if (cancelRequested) {
+      // Terminating the worker makes the in-flight exec() reject right away.
+      try { ffmpeg.terminate(); } catch (_) {}
+      return;
+    }
     console.log("[ffmpeg]", message);
     const m = String(message).match(/time=(\d+):(\d+):(\d+(?:\.\d+)?)/);
     if (m && currentDuration) {
@@ -992,8 +1052,10 @@ async function convertToMp4(webmBlob) {
     coreURL: "/vendor/ffmpeg-core.js",
     wasmURL: "/vendor/ffmpeg-core.wasm",
   });
+  checkCancel();
 
   await ffmpeg.writeFile("input.webm", await fetchFile(webmBlob));
+  checkCancel();
   setStatus("", "Converting WebM → MP4…");
 
   await ffmpeg.exec([
@@ -1008,6 +1070,7 @@ async function convertToMp4(webmBlob) {
     "-movflags", "+faststart",
     "output.mp4",
   ]);
+  checkCancel();
 
   const data = await ffmpeg.readFile("output.mp4");
   const mp4Blob = new Blob([data], { type: "video/mp4" });
@@ -1108,6 +1171,7 @@ function setSourceLocked(locked) {
 async function runGenerate() {
   if (busy) return;
   busy = true;
+  cancelRequested = false;
   // Lock everything (avatar, theme, audio source, trim) while recording and
   // converting so the scene cannot change mid-render (WYSIWYG).
   setControlsLocked(true);
@@ -1115,10 +1179,13 @@ async function runGenerate() {
   els.playBtn.disabled = true;
   els.generateBtn.classList.remove("ready");
   setBusyWarning(true);
+  setCancelVisible(true);
   // A new generate invalidates any previously produced MP4.
   lastMp4 = null;
   setGenerateLabel("Preparing…");
   setStatus("", "Preparing recorder…");
+
+  const wasCancelled = () => cancelRequested;
 
   try {
     const capture = ensureAudioCapture();
@@ -1134,6 +1201,7 @@ async function runGenerate() {
       return;
     }
     await recorder.prepare();
+    if (wasCancelled()) throw new Error("Cancelled");
 
     const startupT0 = performance.now();
     recorder.start();
@@ -1149,12 +1217,15 @@ async function runGenerate() {
     // Auto-stop when the timeline completes (elapsed-based, so an auto-pause
     // from a hidden tab does not falsely finish the recording). Progress
     // fills the generate button with color while recording.
-    await new Promise((resolve) => {
+    const result = await new Promise((resolve) => {
       const check = setInterval(() => {
         const dur = preview.timeline.duration;
-        if (preview.timeline.elapsed >= dur) {
+        if (wasCancelled()) {
           clearInterval(check);
-          resolve();
+          resolve("cancelled");
+        } else if (preview.timeline.elapsed >= dur) {
+          clearInterval(check);
+          resolve("done");
         } else {
           setProgress((preview.timeline.elapsed / dur) * 100);
         }
@@ -1164,6 +1235,9 @@ async function runGenerate() {
     const exportT0 = performance.now();
     const { blob } = await recorder.stop();
     const exportMs = performance.now() - exportT0;
+    preview.reset();
+
+    if (result === "cancelled") throw new Error("Cancelled");
 
     metricRecordAll(blob, startupMs, exportMs);
     if (audioCapture) audioCapture.setAudible(true);
@@ -1184,12 +1258,18 @@ async function runGenerate() {
     setTimeout(() => setProgress(null), 800);
   } catch (err) {
     console.error(err);
+    if (wasCancelled()) {
+      setStatus("", "Generation cancelled");
+    } else {
+      setStatus("", `Error: ${err.message}`);
+    }
     if (audioCapture) audioCapture.setAudible(true);
-    setStatus("", `Error: ${err.message}`);
   } finally {
     busy = false;
+    cancelRequested = false;
     setBusyWarning(false);
     setProgress(null);
+    setCancelVisible(false);
     setControlsLocked(false);
     els.generateBtn.disabled = false;
     els.playBtn.disabled = false;
@@ -1261,6 +1341,9 @@ function wire() {
     } else {
       void runGenerate();
     }
+  });
+  els.cancelBtn.addEventListener("click", () => {
+    cancelRequested = true;
   });
   els.uploadBtn.addEventListener("click", () => els.audioInput.click());
   els.audioInput.addEventListener("change", async () => {
