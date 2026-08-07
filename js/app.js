@@ -109,7 +109,7 @@ function renderSkeletonBars() {
   const innerW = bw - padL - padR;
   const n = Math.max(24, Math.min(TRIM_BARS, Math.floor(innerW / 5)));
   const step = innerW / n;
-  const barW = Math.max(1, step * 0.5);
+  const barW = Math.max(1, step * 0.65);
 
   // The canvas starts after the container's padding; shift the skeleton bars
   // by the same amount so they line up with the drawn bars exactly.
@@ -120,7 +120,8 @@ function renderSkeletonBars() {
   let html = "";
   for (let i = 0; i < n; i++) {
     const x = offsetX + padL + i * step + (step - barW) / 2;
-    html += `<i style="left:${x.toFixed(1)}px;width:${barW.toFixed(1)}px"></i>`;
+    const h = 12 + Math.random() * 36;
+    html += `<i style="left:${x.toFixed(1)}px;width:${barW.toFixed(1)}px;height:${h.toFixed(0)}px"></i>`;
   }
   sk.innerHTML = html;
 }
