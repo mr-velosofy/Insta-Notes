@@ -154,7 +154,7 @@ async def notify_download(request: Request, event: DownloadEvent) -> Response:
     export_id = event.id.strip()
     if not export_id:
         return Response(status_code=400)
-    if _rate_limited(_client_ip(request), 5):
+    if _rate_limited(_client_ip(request), 10):
         return Response(status_code=429)
     _sweep_export_ids()
     if _export_ids.pop(export_id, None) is None:
