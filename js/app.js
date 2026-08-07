@@ -54,6 +54,7 @@ const els = {
   generateFill: document.getElementById("generate-fill"),
   generateLabel: document.getElementById("generate-label"),
   cancelBtn: document.getElementById("cancel-btn"),
+  reuseBtn: document.getElementById("reuse-btn"),
   resetBtn: document.getElementById("reset-btn"),
   statusDot: document.getElementById("status-dot"),
   statusText: document.getElementById("status-text"),
@@ -211,12 +212,26 @@ function setCancelVisible(show) {
   if (els.cancelBtn) els.cancelBtn.classList.toggle("show", show);
 }
 
-/** A change to the scene (trim / theme / avatar) invalidates the last MP4. */
+/** Show/hide the "Download last" button next to Generate. It appears when a
+ *  generated MP4 exists but the scene has changed (stale video) so the user
+ *  can still grab the previous render without re-recording. */
+function setReuseVisible(show) {
+  if (els.reuseBtn) els.reuseBtn.classList.toggle("show", show);
+}
+
+/** Keep the reuse button in sync with the cached MP4 and scene state. */
+function syncReuseButton() {
+  setReuseVisible(!!lastMp4 && !els.generateBtn.classList.contains("ready") && !busy);
+}
+
+/** A change to the scene (trim / theme / avatar) makes the last MP4 stale.
+ *  The blob stays cached until the tab refreshes so it can still be downloaded
+ *  via the "Download last" button; only the ready state is lost. */
 function invalidateGenerated() {
-  lastMp4 = null;
   els.generateBtn.classList.remove("ready");
   if (!busy) setGenerateLabel("Generate");
   setProgress(null);
+  syncReuseButton();
 }
 
 const metrics = {
@@ -969,6 +984,7 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
     els.generateBtn.classList.remove("ready");
     setGenerateLabel("Generate");
     setProgress(null);
+    syncReuseButton();
     els.stepAudio.classList.add("done");
     els.stepTrim.classList.add("done");
     applyTrim();
@@ -1357,8 +1373,9 @@ async function runGenerate() {
   els.generateBtn.classList.remove("ready");
   setBusyWarning(true);
   setCancelVisible(true);
-  // A new generate invalidates any previously produced MP4.
-  lastMp4 = null;
+  syncReuseButton();
+  // Keep any previously produced MP4 cached (now stale) so it stays
+  // downloadable via "Download last" if this generation is cancelled/fails.
   setGenerateLabel("Preparing…");
   setStatus("", "Preparing recorder…");
 
@@ -1431,6 +1448,7 @@ async function runGenerate() {
     setProgress(100);
     els.generateBtn.classList.add("ready");
     setGenerateLabel("Download");
+    syncReuseButton();
     setStatus("", "MP4 ready — press Download");
     setTimeout(() => setProgress(null), 800);
   } catch (err) {
@@ -1451,6 +1469,7 @@ async function runGenerate() {
     els.generateBtn.disabled = false;
     els.playBtn.disabled = false;
     if (!lastMp4) setGenerateLabel("Generate");
+    syncReuseButton();
     setPlayLabel(false);
   }
 }
@@ -1518,7 +1537,9 @@ async function removeAudio() {
 
 function wire() {
   els.generateBtn.addEventListener("click", () => {
-    if (lastMp4) {
+    // Only auto-download when the cached MP4 still matches the scene; a stale
+    // one (scene changed) requires pressing Generate to re-record.
+    if (lastMp4 && els.generateBtn.classList.contains("ready")) {
       void runConvert();
     } else {
       void runGenerate();
@@ -1526,6 +1547,12 @@ function wire() {
   });
   els.cancelBtn.addEventListener("click", () => {
     cancelRequested = true;
+  });
+  els.reuseBtn.addEventListener("click", () => {
+    if (lastMp4) {
+      Recorder.download(lastMp4, "insta-notes.mp4");
+      showToast("Downloaded the video from previous settings.");
+    }
   });
   els.uploadBtn.addEventListener("click", () => els.audioInput.click());
   els.audioInput.addEventListener("change", async () => {

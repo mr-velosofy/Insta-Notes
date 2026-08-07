@@ -836,6 +836,53 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 .btn-cancel svg { width: 20px; height: 20px; }
 
+/* "Download last" button: appears when the cached MP4 is stale (scene changed
+   after generation) so the previous video stays downloadable without a
+   re-record. Same collapsed/expanded animation as .btn-cancel. */
+.btn-reuse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 0;
+  align-self: stretch;
+  flex-shrink: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+  background-color: var(--btn-bg-light);
+  color: var(--text-light);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    width 0.3s ease,
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    border-color 0.3s ease,
+    color 0.2s,
+    background-color 0.2s;
+}
+.btn-reuse.show {
+  width: auto;
+  padding: 0 16px;
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+  border-color: var(--panel-border);
+}
+.btn-reuse.show:hover {
+  color: #22c55e;
+  border-color: #22c55e;
+  background-color: color-mix(in srgb, #22c55e 8%, var(--btn-bg-light));
+  transform: scale(1.04);
+}
+.btn-reuse svg { width: 18px; height: 18px; }
+
 /* --- Trim Audio Panel --- */
 .trim-panel-header {
   display: flex;
@@ -1241,6 +1288,9 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   .action-row { gap: 10px; margin-top: 12px; }
   .btn-preview, .btn-generate { flex: 1; min-width: 0; padding: 13px 16px; font-size: 0.9375rem; }
   .btn-preview svg { width: 18px; height: 18px; }
+  /* Keep "Download last" compact on phones: icon only, label hidden. */
+  .btn-reuse span { display: none; }
+  .btn-reuse.show { padding: 0 12px; }
 
   .trim-panel-header { margin-bottom: 14px; }
   .trimmer-container { height: 64px; padding: 0 12px; }
