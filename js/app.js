@@ -326,9 +326,17 @@ function ensureAudioCapture() {
     ctx,
     track: dest.stream.getAudioTracks()[0],
     setAudible(on) {
-      // Ramp instead of jumping the gain: an instant 0->1 change at a sample
-      // boundary (e.g. right after pause() on cancel) produces a 1-sample DC
-      // "jack pop". 30 ms is below audibility but fully removes the click.
+      // Ramp instead of jumping the gain: an instant 0<->1 change at a sample
+      // boundary produces a 1-sample DC "jack pop". 30 ms is below audibility
+      // but fully removes the click.
+      // Never schedule a ramp in a suspended context: its events fire on
+      // frozen time and would replay after resume() while the element is
+      // restarting. Jump instantly instead — nothing is audible while
+      // suspended, and callers only unmute once the element is playing.
+      if (ctx.state !== "running") {
+        gain.gain.value = on ? 1 : 0;
+        return;
+      }
       const t = ctx.currentTime;
       gain.gain.cancelScheduledValues(t);
       gain.gain.setValueAtTime(gain.gain.value, t);
@@ -1426,6 +1434,11 @@ async function runGenerate() {
     if (capture && capture.ctx.state === "suspended") capture.ctx.resume().catch(() => {});
     if (capture) capture.setAudible(false);
 
+    // Let the mute fade complete before touching the audio element, so the
+    // pause/restart below happens in silence (no "jack pop" on Generate).
+    await new Promise((r) => setTimeout(r, 50));
+    preview.reset();
+
     recorder = new Recorder(els.scene, {
       filePrefix: "insta-notes",
       audioTrack: capture ? capture.track : null,
@@ -1442,8 +1455,7 @@ async function runGenerate() {
     const startRec = performance.now();
     setGenerateLabel("Recording…");
     setStatus("recording", "Recording…");
-    // Always record from the very start, even if the preview was mid-play.
-    preview.reset();
+    // The timeline starts here; the element restarts from 0 in silence.
     preview.play();
 
     const startupMs = startRec - startupT0;
@@ -1474,7 +1486,8 @@ async function runGenerate() {
     if (result === "cancelled") throw new Error("Cancelled");
 
     metricRecordAll(blob, startupMs, exportMs);
-    if (audioCapture) audioCapture.setAudible(true);
+    // Stay muted here: unmuting while the element is paused would pop. The
+    // next Preview press restores audibility after playback starts.
 
     // Convert WebM → MP4 as part of the Generate step.
     setGenerateLabel("Converting…");
@@ -1497,7 +1510,6 @@ async function runGenerate() {
     } else {
       setStatus("", `Error: ${err.message}`);
     }
-    if (audioCapture) audioCapture.setAudible(true);
   } finally {
     busy = false;
     cancelRequested = false;
@@ -1538,10 +1550,7 @@ function metricRecordAll(blob, startupMs, exportMs) {
 async function playPreview() {
   if (busy) return;
   const capture = ensureAudioCapture();
-  if (capture) {
-    if (capture.ctx.state === "suspended") capture.ctx.resume().catch(() => {});
-    capture.setAudible(true);
-  }
+  if (capture && capture.ctx.state === "suspended") capture.ctx.resume().catch(() => {});
 
   if (preview.timeline.running) {
     preview.pause();
@@ -1556,11 +1565,16 @@ async function playPreview() {
     // cancelled generation) — restart cleanly from the beginning. The audio
     // element would otherwise keep its stale mid-file position.
     preview.play();
+    // Unmute only after the element is running from 0, so the transition is
+    // silent (unmuting a paused element produces a DC pop).
+    if (capture) capture.setAudible(true);
     setSourceLocked(true);
     setPlayLabel(true);
     setStatus("", "Preview playing");
   } else {
     preview.resume();
+    // Resume mid-stream and fade back in — a continuous ramp never clicks.
+    if (capture) capture.setAudible(true);
     setSourceLocked(true);
     setPlayLabel(true);
     setStatus("", "Preview playing");
