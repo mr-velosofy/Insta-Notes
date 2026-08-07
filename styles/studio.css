@@ -603,15 +603,32 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   align-items: center;
   gap: 8px;
   background-color: var(--card-bg);
-  transition: border-color 0.2s, background-color 0.2s;
+  transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
 }
 .action-btn:hover {
   border-color: var(--text-main);
   background-color: var(--btn-bg-light);
 }
-.action-btn svg { width: 24px; height: 24px; color: var(--text-main); }
-.action-title { font-size: 0.875rem; font-weight: 600; color: var(--text-main); }
-.action-desc { font-size: 0.75rem; color: var(--text-light); }
+.action-btn svg { width: 24px; height: 24px; color: var(--text-main); transition: color 0.25s ease; }
+.action-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: color 0.25s ease;
+}
+.action-desc {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  min-width: 104px;
+  text-align: center;
+  transition: color 0.25s ease;
+}
+
+/* Fade the swapped title/description text in on state changes. */
+.action-btn .action-title,
+.action-btn .action-desc {
+  animation: actionSwap 0.28s ease;
+}
 
 .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -642,6 +659,12 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 @keyframes recPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* Short fade-up used when the record card text swaps states. */
+@keyframes actionSwap {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .active-file {
@@ -1097,6 +1120,8 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .busy-warning { transition: none; }
   .trim-skeleton i { animation: none; }
+  .action-btn .action-title,
+  .action-btn .action-desc { animation: none; }
 }
 
 #status-dot {
