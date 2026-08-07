@@ -261,12 +261,22 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
-/* Hero "Start Creating" — a soft accent glow whose opacity gently pulses.
-   The button and its text stay perfectly still. */
-.hero .btn-primary { animation: heroCtaPulse 2.2s ease-in-out infinite; }
+/* Hero "Start Creating" — a soft glow whose color follows the rotating
+   brand blob (same 5 colors, same 16s period) and gently breathes in size. */
+.hero .btn-primary { animation: heroCtaPulse 16s linear infinite; }
 @keyframes heroCtaPulse {
-  0%, 100% { box-shadow: var(--shadow-md), 0 0 22px -2px color-mix(in srgb, var(--btn-primary-bg, #111) 15%, transparent); }
-  50% { box-shadow: var(--shadow-md), 0 0 38px 0 color-mix(in srgb, var(--btn-primary-bg, #111) 45%, transparent); }
+  0%, 100% { box-shadow: var(--shadow-md), 0 0 24px -2px rgba(254, 218, 117, 0.55); }
+  6% { box-shadow: var(--shadow-md), 0 0 36px 0 rgba(254, 218, 117, 0.45); }
+  18% { box-shadow: var(--shadow-md), 0 0 24px -2px rgba(250, 126, 30, 0.55); }
+  24% { box-shadow: var(--shadow-md), 0 0 36px 0 rgba(250, 126, 30, 0.45); }
+  36% { box-shadow: var(--shadow-md), 0 0 24px -2px rgba(214, 41, 118, 0.55); }
+  42% { box-shadow: var(--shadow-md), 0 0 36px 0 rgba(214, 41, 118, 0.45); }
+  54% { box-shadow: var(--shadow-md), 0 0 24px -2px rgba(150, 47, 191, 0.55); }
+  60% { box-shadow: var(--shadow-md), 0 0 36px 0 rgba(150, 47, 191, 0.45); }
+  72% { box-shadow: var(--shadow-md), 0 0 24px -2px rgba(79, 91, 213, 0.55); }
+  78% { box-shadow: var(--shadow-md), 0 0 36px 0 rgba(79, 91, 213, 0.45); }
+  88% { box-shadow: var(--shadow-md), 0 0 24px -2px rgba(254, 218, 117, 0.55); }
+  94% { box-shadow: var(--shadow-md), 0 0 36px 0 rgba(254, 218, 117, 0.45); }
 }
 
 .btn-secondary-link {
