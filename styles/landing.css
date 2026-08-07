@@ -234,7 +234,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   align-items: center;
   gap: 10px;
   background-color: var(--btn-primary-bg, #111);
-  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
+  background-image: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #4f8fd5, #2dd4bf, #a8e6cf, #d4e157, #feda75);
   background-size: 200% 100%;
   color: var(--btn-primary-fg, white);
   padding: 14px 28px;
@@ -243,14 +243,14 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   font-weight: 700;
   box-shadow: var(--shadow-md);
   transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
-  animation: btnGradSlide 4s linear infinite;
+  animation: btnGradSlide 8s linear infinite;
 }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
 /* Hero "Start Creating" — a soft accent glow whose opacity gently pulses.
    The button and its text stay perfectly still. */
-.hero .btn-primary { animation: heroCtaPulse 2.2s ease-in-out infinite, btnGradSlide 4s linear infinite; }
+.hero .btn-primary { animation: heroCtaPulse 2.2s ease-in-out infinite, btnGradSlide 8s linear infinite; }
 @keyframes heroCtaPulse {
   0%, 100% { box-shadow: var(--shadow-md), 0 0 22px -2px color-mix(in srgb, var(--btn-primary-bg, #111) 15%, transparent); }
   50% { box-shadow: var(--shadow-md), 0 0 38px 0 color-mix(in srgb, var(--btn-primary-bg, #111) 45%, transparent); }
@@ -665,8 +665,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   position: relative;
 }
 .final-cta .btn-primary {
-  background-color: var(--btn-primary-bg, var(--brand-orange));
-  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
+  background-image: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #4f8fd5, #2dd4bf, #a8e6cf, #d4e157, #feda75);
   color: var(--btn-primary-fg, #fff);
 }
 .final-cta .btn-primary:hover { background-color: var(--btn-primary-hover, #ea580c); filter: brightness(1.08); }
