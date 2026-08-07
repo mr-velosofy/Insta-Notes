@@ -262,20 +262,22 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn-primary svg { width: 20px; height: 20px; }
 
-/* "Start Creating": each character flips Inter normal -> italic -> normal.
-   The per-char animation-delay (--i) staggers the flips so the change travels
-   across the label like a wave, first upright then italicized. */
+/* "Start Creating": each character eases its slant (Inter variable slnt axis)
+   upright -> italic -> upright. The per-char animation-delay (--i) staggers
+   the wave so the slant travels continuously across the label — a true
+   per-frame morph, not a font-style switch. */
 .wave-char {
   display: inline-block;
   white-space: pre;
   font-style: normal;
-  animation: charWave 2.8s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 90ms);
+  font-variation-settings: "wght" 700, "slnt" 0;
+  animation: charWave 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 110ms);
 }
 @keyframes charWave {
-  0%   { font-style: normal; }
-  50%  { font-style: italic; }
-  100% { font-style: normal; }
+  0%   { font-variation-settings: "wght" 700, "slnt" 0; }
+  50%  { font-variation-settings: "wght" 700, "slnt" -10; }
+  100% { font-variation-settings: "wght" 700, "slnt" 0; }
 }
 
 /* Hero "Start Creating" — no glow, plain button. */
