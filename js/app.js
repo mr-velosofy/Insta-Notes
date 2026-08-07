@@ -958,8 +958,21 @@ async function loadSourceFromBlob(blob, name, restoreTrim = null) {
 
 /* --- microphone recording --- */
 let micRec = null; // { stream, recorder, chunks, timer, startTime }
+let micPending = false; // true while getUserMedia is in flight (spam guard)
+let micStream = null; // cached mic stream, reused across recordings
+
+/** Return a live mic stream, reusing the cached one so a second recording
+ *  starts instantly instead of re-opening the device. */
+async function getMicStream() {
+  if (micStream && micStream.getAudioTracks().some((t) => t.readyState === "live")) {
+    return micStream;
+  }
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  return micStream;
+}
 
 async function toggleRecord() {
+  if (micPending) return; // a start is already in flight — ignore spam
   if (micRec) {
     stopRecording();
     return;
@@ -968,13 +981,15 @@ async function toggleRecord() {
     setStatus("", "Microphone not available in this browser.");
     return;
   }
+  micPending = true;
+  setStatus("", "Accessing microphone…");
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await getMicStream();
     const chunks = [];
     const recorder = new MediaRecorder(stream);
     recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
     recorder.onstop = () => {
-      stopMicStream(stream);
+      // The stream is kept alive for the next recording (cached).
       const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
       clearInterval(micRec && micRec.timer);
       micRec = null;
@@ -1006,12 +1021,18 @@ async function toggleRecord() {
   } catch (err) {
     console.error(err);
     setStatus("", "Microphone permission denied or unavailable.");
+  } finally {
+    micPending = false;
   }
 }
 
 function stopRecording() {
   if (!micRec) return;
-  if (micRec.recorder.state !== "inactive") micRec.recorder.stop();
+  // Spam-clicking Stop while the recorder is already stopping/inactive must
+  // not call stop() again (MediaRecorder.stop() throws on inactive).
+  if (micRec.recorder.state === "recording" || micRec.recorder.state === "paused") {
+    micRec.recorder.stop();
+  }
 }
 
 function stopMicStream(stream) {
