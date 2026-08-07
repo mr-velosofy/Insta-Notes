@@ -1534,6 +1534,10 @@ async function runConvert() {
   if (!lastMp4) return;
   Recorder.download(lastMp4, "insta-notes.mp4");
   setStatus("exported", "Downloaded insta-notes.mp4");
+  // Tell the server a download happened so it can post a Discord webhook.
+  // The webhook URL stays server-side (.env); the frontend only sends a
+  // bodyless POST and never sees any configuration.
+  fetch("/api/notify-download", { method: "POST", keepalive: true }).catch(() => {});
 }
 
 function metricRecordAll(blob, startupMs, exportMs) {
