@@ -1238,12 +1238,15 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 
 /* Transient warning toast (auto-dismissed by app.js) — glassy amber so it
-   reads as a warning while staying readable over any theme. */
+   reads as a warning while staying readable over any theme.
+   Mobile: 80% width, centered at the bottom. Desktop: bottom-right, sliding
+   in from the right and out to the right again. */
 .toast {
   position: fixed;
   left: 50%;
   bottom: 24px;
   transform: translate(-50%, 16px);
+  width: 80%;
   max-width: min(480px, calc(100vw - 32px));
   padding: 12px 18px;
   background: color-mix(in srgb, #fbbf24 18%, transparent);
@@ -1258,11 +1261,25 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   text-align: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.25s ease, transform 0.3s ease;
   z-index: 200;
 }
 
 .toast.show {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+@media (min-width: 768px) {
+  .toast {
+    left: auto;
+    right: 28px;
+    bottom: 28px;
+    width: auto;
+    max-width: min(420px, calc(100vw - 56px));
+    transform: translateX(calc(100% + 40px));
+  }
+  .toast.show {
+    transform: translateX(0);
+  }
 }
