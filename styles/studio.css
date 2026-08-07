@@ -118,8 +118,21 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-style: italic;
   font-weight: 600;
   font-size: 1em;
-  color: #d62976;
-  filter: drop-shadow(0 0 12px rgba(214, 41, 118, 0.5));
+  background-image: var(--insta-gradient, linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5));
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: grad-breathe 8s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px rgba(214, 41, 118, 0.35));
+  padding: 0 3px;
+  margin: 0 -3px;
+}
+
+@keyframes grad-breathe {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
 
 .header-actions {
