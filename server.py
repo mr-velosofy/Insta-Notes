@@ -33,6 +33,10 @@ def ping() -> Response:
 def index() -> Response:
     return FileResponse(TEMPLATES_DIR / "landing.html")
 
+@app.get("/home", include_in_schema=False)
+def index_2() -> Response:
+    return FileResponse(TEMPLATES_DIR / "landing.html")
+
 
 @app.get("/studio", include_in_schema=False)
 def studio() -> Response:
