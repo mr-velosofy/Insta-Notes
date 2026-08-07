@@ -157,9 +157,10 @@ function setBusyWarning(show) {
   if (els.busyWarning) els.busyWarning.classList.toggle("busy-warning-visible", show);
 }
 
-/** Show/hide the X button next to Generate while rendering. */
+/** Show/hide the X button next to Generate while rendering. The width and
+ *  opacity are transitioned in CSS so the row reflows smoothly. */
 function setCancelVisible(show) {
-  if (els.cancelBtn) els.cancelBtn.hidden = !show;
+  if (els.cancelBtn) els.cancelBtn.classList.toggle("show", show);
 }
 
 /** A change to the scene (trim / theme / avatar) invalidates the last MP4. */
@@ -816,11 +817,47 @@ async function decodeBlob(blob) {
   return offlineDecode().decodeAudioData(arrayBuf);
 }
 
+/** Cheap duration probe using the file's metadata only (no full decode).
+ *  Resolves true if the audio is definitively longer than the source cap,
+ *  false when it's within limits or the duration couldn't be determined.
+ *  This runs before any heavy decode so huge files fail fast. */
+function probeTooLong(blob) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const au = document.createElement("audio");
+    au.preload = "metadata";
+    const finish = (tooLong) => {
+      clearTimeout(timer);
+      au.removeAttribute("src");
+      URL.revokeObjectURL(url);
+      resolve(tooLong);
+    };
+    const timer = setTimeout(() => finish(false), 10000);
+    au.addEventListener(
+      "loadedmetadata",
+      () => {
+        const d = au.duration;
+        finish(isFinite(d) && d > MAX_SOURCE_DURATION + 0.5);
+      },
+      { once: true }
+    );
+    au.addEventListener("error", () => finish(false), { once: true });
+    au.src = url;
+  });
+}
+
 async function loadSourceFromBlob(blob, name, restoreTrim = null) {
   setTrimSkeleton(true);
   try {
+    if (await probeTooLong(blob)) {
+      setStatus("", `Audio is too long — max ${fmtTime(MAX_SOURCE_DURATION)}`);
+      showToast(`Audio is longer than ${fmtTime(MAX_SOURCE_DURATION)}. Please use a shorter file.`);
+      return;
+    }
+
     const decoded = await decodeBlob(blob);
 
+    // Backstop: the metadata probe can misreport for some containers.
     if (decoded.duration > MAX_SOURCE_DURATION + 0.5) {
       setStatus("", `Audio is too long — max ${fmtTime(MAX_SOURCE_DURATION)}`);
       showToast(`Audio is longer than ${fmtTime(MAX_SOURCE_DURATION)}. Please use a shorter file.`);

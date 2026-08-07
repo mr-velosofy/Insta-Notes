@@ -770,29 +770,46 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 .btn-preview svg { width: 18px; height: 18px; }
 .btn-preview:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Cancel (X) button shown next to Generate while rendering. */
+/* Cancel (X) button shown next to Generate while rendering. Width/opacity
+   are animated so the row reflows smoothly when it appears and disappears. */
 .btn-cancel {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
+  width: 0;
   height: 50px;
   flex-shrink: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
   background-color: var(--btn-bg-light);
   color: var(--text-light);
-  border: 1px solid var(--panel-border);
+  border: 1px solid transparent;
   border-radius: 12px;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, background-color 0.2s, transform 0.2s;
+  transition:
+    width 0.3s ease,
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    border-color 0.3s ease,
+    color 0.2s,
+    background-color 0.2s;
 }
-.btn-cancel:hover {
+.btn-cancel.show {
+  width: 48px;
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+  border-color: var(--panel-border);
+}
+.btn-cancel.show:hover {
   color: #ef4444;
   border-color: #ef4444;
   background-color: color-mix(in srgb, #ef4444 8%, var(--btn-bg-light));
-  transform: translateY(-1px);
+  transform: scale(1.04);
 }
 .btn-cancel svg { width: 20px; height: 20px; }
-.btn-cancel[hidden] { display: none; }
 
 /* --- Trim Audio Panel --- */
 .trim-panel-header {
