@@ -107,9 +107,9 @@ function renderSkeletonBars() {
   const bw = canvas.clientWidth || 640;
   const padL = 6, padR = 6;
   const innerW = bw - padL - padR;
-  const n = Math.max(24, Math.min(TRIM_BARS, Math.floor(innerW / 5)));
+  const n = Math.max(24, Math.min(TRIM_BARS, Math.floor(innerW / 6)));
   const step = innerW / n;
-  const barW = Math.max(1, step * 0.65);
+  const barW = Math.max(1, step * 0.6);
 
   // The canvas starts after the container's padding; shift the skeleton bars
   // by the same amount so they line up with the drawn bars exactly.
