@@ -159,6 +159,14 @@ function setRecordLabel(recording) {
   els.recordBtn.classList.toggle("recording", recording);
 }
 
+/** Swap the upload action-card labels while the audio is being decoded. */
+function setUploadDecoding(decoding) {
+  const title = els.uploadBtn.querySelector(".action-title");
+  if (title) title.textContent = decoding ? "Decoding Audio…" : "Upload Audio";
+  const desc = els.uploadBtn.querySelector(".action-desc");
+  if (desc) desc.textContent = decoding ? "Please wait…" : "MP3, WAV, M4A, OGG";
+}
+
 /** Update the live elapsed-time on the record button while recording. */
 function setRecordTimer(secs) {
   const desc = els.recordBtn.querySelector(".action-desc");
@@ -1130,7 +1138,14 @@ function stopRecording() {
 async function handleAudioUpload(file) {
   if (!file) return;
   setStatus("", "Decoding audio…");
-  await loadSourceFromBlob(file, file.name);
+  setUploadDecoding(true);
+  els.uploadBtn.disabled = true;
+  try {
+    await loadSourceFromBlob(file, file.name);
+  } finally {
+    els.uploadBtn.disabled = false;
+    setUploadDecoding(false);
+  }
 }
 
 /* ------------------------------------------------------------------
