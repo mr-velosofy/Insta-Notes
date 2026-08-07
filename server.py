@@ -9,6 +9,15 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 
 app = FastAPI(title="Insta Notes")
 
+# Served before the /assets mount so the webmanifest gets an explicit
+# media type (Python's built-in mimetypes table lacks .webmanifest).
+@app.get("/assets/site.webmanifest", include_in_schema=False)
+def site_manifest() -> Response:
+    return FileResponse(
+        BASE_DIR / "assets" / "site.webmanifest",
+        media_type="application/manifest+json",
+    )
+
 app.mount("/styles", StaticFiles(directory=BASE_DIR / "styles"), name="styles")
 app.mount("/js", StaticFiles(directory=BASE_DIR / "js"), name="js")
 app.mount("/assets", StaticFiles(directory=BASE_DIR / "assets"), name="assets")
