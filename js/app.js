@@ -326,7 +326,13 @@ function ensureAudioCapture() {
     ctx,
     track: dest.stream.getAudioTracks()[0],
     setAudible(on) {
-      gain.gain.value = on ? 1 : 0;
+      // Ramp instead of jumping the gain: an instant 0->1 change at a sample
+      // boundary (e.g. right after pause() on cancel) produces a 1-sample DC
+      // "jack pop". 30 ms is below audibility but fully removes the click.
+      const t = ctx.currentTime;
+      gain.gain.cancelScheduledValues(t);
+      gain.gain.setValueAtTime(gain.gain.value, t);
+      gain.gain.linearRampToValueAtTime(on ? 1 : 0, t + 0.03);
     },
   };
   return audioCapture;
