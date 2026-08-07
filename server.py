@@ -21,6 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
+# Public site URL, used only for Discord embed links/images. Render sets
+# RENDER_EXTERNAL_URL for web services; local runs fall back to the live URL.
+SITE_URL = os.getenv("RENDER_EXTERNAL_URL", "https://insta-notes.onrender.com").rstrip("/")
 
 # --- Single-use export IDs ---------------------------------------------------
 # When a video finishes converting, the server mints an 11-character ID
@@ -114,10 +117,36 @@ async def _send_discord_notification(export_id: str) -> None:
             "username": "Insta Notes",
             "embeds": [
                 {
-                    "title": "Video downloaded",
-                    "description": "An exported video was downloaded.",
                     "color": 0xD62976,
-                    "fields": [{"name": "Export ID", "value": export_id, "inline": True}],
+                    "author": {
+                        "name": "Insta Notes",
+                        "url": f"{SITE_URL}/",
+                        "icon_url": f"{SITE_URL}/assets/icons/favicon/favicon.png",
+                    },
+                    "title": "Video downloaded",
+                    "description": "A voice-note video was exported and downloaded.",
+                    "thumbnail": {"url": f"{SITE_URL}/assets/insta-default.jpg"},
+                    "fields": [
+                        {
+                            "name": "Export ID",
+                            "value": f"`{export_id}`",
+                            "inline": True,
+                        },
+                        {
+                            "name": "Filename",
+                            "value": f"`{export_id}.mp4`",
+                            "inline": True,
+                        },
+                        {
+                            "name": "Studio",
+                            "value": f"[Open Insta Notes]({SITE_URL}/studio)",
+                            "inline": True,
+                        },
+                    ],
+                    "footer": {
+                        "text": "Insta Notes • Download notification",
+                        "icon_url": f"{SITE_URL}/assets/icons/favicon/favicon.png",
+                    },
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             ],
