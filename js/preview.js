@@ -17,7 +17,6 @@
 import { Timeline, DURATION, WIDTH, HEIGHT } from "./timeline.js";
 
 export const AVATAR_URL = "/assets/insta-default.jpg";
-export const BG_URL = "/assets/background.jpg";
 
 // Bubble layout (px).
 const BUBBLE_W = 960;
@@ -145,8 +144,6 @@ export class Preview {
 
     this.avatarImg = new Image();
     this.avatarImg.src = AVATAR_URL;
-    this.bgImg = new Image();
-    this.bgImg.src = BG_URL;
 
     this.theme = theme;
 
@@ -246,7 +243,6 @@ export class Preview {
     const t0 = performance.now();
     await Promise.all([
       this._load(this.avatarImg),
-      this._load(this.bgImg),
     ]);
     const loadMs = performance.now() - t0;
 
