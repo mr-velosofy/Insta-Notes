@@ -118,13 +118,9 @@ async def _send_discord_notification(export_id: str) -> None:
             "embeds": [
                 {
                     "color": 0xD62976,
-                    "author": {
-                        "name": "Insta Notes",
-                        "url": f"{SITE_URL}/",
-                        "icon_url": f"{SITE_URL}/assets/icons/favicon/favicon.png",
-                    },
                     "title": "Video downloaded",
                     "description": "A voice-note video was exported and downloaded.",
+                    "thumbnail": {"url": f"{SITE_URL}/assets/icons/favicon/favicon.png"},
                     "fields": [
                         {
                             "name": "Export ID",
