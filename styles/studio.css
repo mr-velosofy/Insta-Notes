@@ -850,21 +850,20 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 #trim-wave.locked { opacity: 0.5; pointer-events: none; }
 
 /* Skeleton shown while the audio decodes / is restored from cache. Bars are
-   sized in JS to mirror the trim wave geometry (bar = half the step width,
-   spaced with justify-content: space-between). */
+   absolutely positioned by JS at the exact same coordinates as the trim wave
+   bars, so the shimmer overlays the real bars pixel-for-pixel. */
 .trim-skeleton {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
+  display: block;
   overflow: hidden;
   pointer-events: none;
 }
 .trim-skeleton[hidden] { display: none; }
 .trim-skeleton i {
-  flex: 0 0 auto;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   height: 36px;
   border-radius: 3px;
   background: linear-gradient(
@@ -876,9 +875,6 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   background-size: 400% 100%;
   animation: skeletonShimmer 1.4s ease infinite;
 }
-.trim-skeleton i:nth-child(2n) { height: 24px; }
-.trim-skeleton i:nth-child(3n) { height: 46px; }
-.trim-skeleton i:nth-child(5n) { height: 30px; }
 
 @keyframes skeletonShimmer {
   0% { background-position: 100% 0; }

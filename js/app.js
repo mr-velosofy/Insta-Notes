@@ -96,17 +96,33 @@ function setTrimSkeleton(show) {
   els.trimWave.classList.toggle("trim-wave-loading", show);
 }
 
-/** (Re)build the skeleton bars to mirror the trim wave geometry exactly:
- *  ~5px step, each bar half the step width, spread across the full width.
- *  Flexbox distributes them identically to the canvas bars at any size. */
+/** (Re)build the skeleton bars using the exact same geometry as
+ *  drawTrimWave: same step (~5px), same bar width (half the step), same
+ *  positions, offset so they sit on top of where the real bars will render —
+ *  including the container's padding difference. */
 function renderSkeletonBars() {
   const sk = els.trimSkeleton;
   if (!sk || !sk.dataset.ready) return;
-  const cs = getComputedStyle(sk);
-  const w = sk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  const n = Math.max(24, Math.floor(w / 5));
-  const barW = Math.max(1, (w / n) * 0.5);
-  sk.innerHTML = new Array(n).fill("").map(() => `<i style="width:${barW}px"></i>`).join("");
+  const canvas = els.trimWave;
+  const bw = canvas.clientWidth || 640;
+  const padL = 6, padR = 6;
+  const innerW = bw - padL - padR;
+  const n = Math.max(24, Math.min(TRIM_BARS, Math.floor(innerW / 5)));
+  const step = innerW / n;
+  const barW = Math.max(1, step * 0.5);
+
+  // The canvas starts after the container's padding; shift the skeleton bars
+  // by the same amount so they line up with the drawn bars exactly.
+  const skRect = sk.getBoundingClientRect();
+  const cvRect = canvas.getBoundingClientRect();
+  const offsetX = skRect.width ? cvRect.left - skRect.left : 0;
+
+  let html = "";
+  for (let i = 0; i < n; i++) {
+    const x = offsetX + padL + i * step + (step - barW) / 2;
+    html += `<i style="left:${x.toFixed(1)}px;width:${barW.toFixed(1)}px"></i>`;
+  }
+  sk.innerHTML = html;
 }
 
 /** Read a CSS custom property set by /js/theme.js, with a fallback. */
