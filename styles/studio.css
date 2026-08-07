@@ -248,10 +248,17 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
 }
 
 /* --- 1. Avatar & Theme Panel --- */
+.panel-avatar {
+  display: flex;
+  flex-direction: column;
+}
 .avatar-theme-section {
   display: flex;
   align-items: center;
   gap: 24px;
+}
+.panel-avatar > .avatar-theme-section {
+  flex: 1;
 }
 
 .avatar-selector {
