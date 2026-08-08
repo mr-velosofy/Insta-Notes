@@ -164,7 +164,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: color-mix(in srgb, var(--card-bg) 55%, transparent);
+  background: color-mix(in srgb, var(--card-bg) 30%, transparent);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);
   border: 1px solid color-mix(in srgb, var(--panel-border) 75%, transparent);
@@ -173,7 +173,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   cursor: pointer;
   transition: background-color 0.2s;
 }
-.ui-mode-btn:hover { background-color: color-mix(in srgb, var(--btn-bg-light) 65%, transparent); }
+.ui-mode-btn:hover { background-color: color-mix(in srgb, var(--btn-bg-light) 40%, transparent); }
 .ui-mode-btn svg { width: 18px; height: 18px; }
 .ui-mode-btn .icon-sun { display: none; }
 html[data-ui-mode="dark"] .ui-mode-btn .icon-sun { display: block; }
@@ -186,7 +186,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   gap: 8px;
   height: 40px;
   padding: 0 16px;
-  background: color-mix(in srgb, var(--card-bg) 55%, transparent);
+  background: color-mix(in srgb, var(--card-bg) 30%, transparent);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);
   border: 1px solid color-mix(in srgb, var(--panel-border) 75%, transparent);
@@ -196,7 +196,7 @@ html[data-ui-mode="dark"] .ui-mode-btn .icon-moon { display: none; }
   color: var(--text-main);
   transition: background-color 0.2s;
 }
-.btn-outline:hover { background-color: color-mix(in srgb, var(--btn-bg-light) 65%, transparent); }
+.btn-outline:hover { background-color: color-mix(in srgb, var(--btn-bg-light) 40%, transparent); }
 .btn-outline svg { width: 16px; height: 16px; }
 
 /* --- Workspace Layout ---
